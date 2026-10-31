@@ -50,23 +50,25 @@ function merge(out:Map<string,Item>,page:Item[],project:string|null):void{
    out.set(item.id,{...prev,...item,_projectId:projectId});
  }
 }
-async function scanProject(id:string,out:Map<string,Item>):Promise<void>{
+async function scanProject(id:string,out:Map<string,Item>,save:()=>Promise<void>):Promise<void>{
  let cursor='0';const seen=new Set<string>();const stage='project '+id;
  for(let i=0;i<MAX_PROJECT_PAGES;i++){
    if(seen.has(cursor))throw error(stage,'Повторяющийся курсор списка');
    seen.add(cursor);
    const data=await api('/backend-api/gizmos/'+encodeURIComponent(id)+'/conversations?cursor='+encodeURIComponent(cursor),stage);
    const page=items(data,stage);merge(out,page,id);
+   if(page.length)await save();
    if(!page.length||!data.cursor)return;
    cursor=String(data.cursor);await pause(DELAY_MS);
  }
  throw error(stage,'Лимит страниц проекта достигнут');
 }
-async function scanAll(out:Map<string,Item>):Promise<void>{
+async function scanAll(out:Map<string,Item>,save:()=>Promise<void>):Promise<void>{
  let offset=0;const stage='general list';
  for(let i=0;i<MAX_LIST_PAGES;i++){
    const data=await api('/backend-api/conversations?offset='+offset+'&limit='+PAGE_SIZE+'&order=updated',stage);
    const page=items(data,stage);merge(out,page,null);
+   if(page.length)await save();
    offset+=page.length;
    if(!page.length||page.length<PAGE_SIZE||(typeof data.total==='number'&&offset>=data.total))return;
    if(i<MAX_LIST_PAGES-1)await pause(DELAY_MS);
@@ -80,20 +82,23 @@ async function send(runId:string,type:string,fields:any={}):Promise<void>{
 async function collect(runId:string):Promise<void>{
  collecting=true;
  const found=new Map<string,Item>();
+ const saved=new Set<string>();
  try{
    await session();
-   // The working MIT exporter retrieves project chats using this cursor API.
-   for(const id of projects()){await scanProject(id,found);await pause(DELAY_MS);}
-   await scanAll(found);
-   await send(runId,'CV_DISCOVERED',{count:found.size});
+   const save=async()=>{
+     await send(runId,'CV_DISCOVERED',{count:found.size});
+     for(const item of found.values()){
+       if(saved.has(item.id))continue;
+       await pause(DELAY_MS);
+       const raw=await api('/backend-api/conversation/'+encodeURIComponent(item.id),'detail '+item.id);
+       await send(runId,'CV_ITEM',{item:{id:item.id,title:item.title||raw?.title||'Untitled',projectId:item._projectId||null,updatedAt:item.update_time?String(item.update_time):null,raw}});
+       saved.add(item.id);
+     }
+   };
+   for(const id of projects()){await scanProject(id,found,save);await pause(DELAY_MS);}
+   await scanAll(found,save);
    if(!found.size)throw error('scan','Найдено 0 чатов: пустой бэкап не создаётся');
-   for(const item of found.values()){
-     const raw=await api('/backend-api/conversation/'+encodeURIComponent(item.id),'detail '+item.id);
-     await send(runId,'CV_ITEM',{item:{id:item.id,title:item.title||raw?.title||'Untitled',projectId:item._projectId||null,updatedAt:item.update_time?String(item.update_time):null,raw}});
-     await pause(DELAY_MS);
-   }
-   await send(runId,'CV_DONE',{discovered:found.size});
- }catch(e){
+   await send(runId,'CV_DONE',{discovered:found.size}); }catch(e){
    const message=e instanceof Error?e.message:String(e);
    try{await chrome.runtime.sendMessage({type:'CV_FAILED',runId,discovered:found.size,error:message});}
    catch{console.error('[ChatVault] Collector error: '+message);}
