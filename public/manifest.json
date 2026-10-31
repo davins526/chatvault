@@ -3,7 +3,7 @@
   "name": "ChatVault — Local ChatGPT Backup",
   "short_name": "ChatVault",
   "description": "Экспериментальное локальное резервирование бесед ChatGPT с историей версий и недельным расписанием.",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
