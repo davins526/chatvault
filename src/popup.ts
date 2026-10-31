@@ -7,7 +7,7 @@ function applyTheme(theme:'dark'|'light'){document.documentElement.dataset.theme
 async function refresh():Promise<void>{
   try {
     const res=await message('CV_GET_STATUS');if(!res?.ok)throw Error(res?.error||'Не удалось получить состояние');
-    const {settings,state,snapshot,logs,snapshotCount}=res;
+    const {settings,state,snapshot,logs,snapshotCount,diagnostics}=res;
     (document.getElementById('enabled') as HTMLInputElement).checked=settings.enabled;
     (document.getElementById('autoDownload') as HTMLInputElement).checked=settings.autoDownload;
     applyTheme(settings.theme==='light'?'light':'dark');
@@ -15,6 +15,9 @@ async function refresh():Promise<void>{
     if (document.activeElement !== startDateInput) startDateInput.value = settings.startDate || '';
     text('scheduleInfo',settings.startDate ? 'Каждые 7 дней от выбранной даты, в 20:00' : 'По умолчанию: воскресенье, 20:00');
     text('notice',state.notice||'Ожидание');
+    const diag=$('diagnosticResult');
+    if(diagnostics){diag.className='diag-status '+(diagnostics.ok?'ok':'failed');diag.textContent=(diagnostics.ok?'Подключение доступно':'Подключение не готово')+' · '+date(diagnostics.at)+' · '+diagnostics.message;}
+    else{diag.className='diag-status';diag.textContent='Диагностика не запускалась';}
     text('count',String(snapshot?.entries?.length||0));
     text('versions',String(snapshotCount||0));
     text('changes',String(snapshot?.changed||0));
@@ -43,6 +46,7 @@ const startDateInput=document.getElementById('startDate') as HTMLInputElement;
 const current=new Date();
 startDateInput.min=[current.getFullYear(),String(current.getMonth()+1).padStart(2,'0'),String(current.getDate()).padStart(2,'0')].join('-');
 startDateInput.addEventListener('change',()=>void updateOptions());
+$('diagnose').addEventListener('click',()=>void(async()=>{const button=$('diagnose') as HTMLButtonElement;button.disabled=true;text('diagnosticResult','Проверка вкладки ChatGPT…');try{const r=await message('CV_DIAGNOSE');text('diagnosticResult',r?.message||r?.error||'Неизвестный ответ');}catch(e){text('diagnosticResult',String(e));}finally{button.disabled=false;await refresh();}})());
 $('backup').addEventListener('click',()=>void(async()=>{($('backup') as HTMLButtonElement).disabled=true;const r=await message('CV_BACKUP_NOW');text('notice',r.message||r.error||'Запрос отправлен');await refresh();})());
 $('download').addEventListener('click',()=>void(async()=>{const r=await message('CV_EXPORT');text('notice',r?.ok?'ZIP передан браузеру для скачивания':r?.error||'Ошибка скачивания');})());
 void refresh();setInterval(()=>void refresh(),4000);

@@ -1,10 +1,10 @@
-# ChatVault v0.1.2 — Monochrome UI and connection fix
+# ChatVault v0.1.3 — Icon & Diagnostic Update
 
-- Новый чёрно-белый интерфейс в стиле минимализма, тёмная и светлая тема.
-- Переключатель темы сохраняется в настройках расширения.
-- Новый лаконичный значок архива в шапке.
-- Устранена частая ошибка "Could not establish connection. Receiving end does not exist": перед сбором проверяется получатель и при необходимости подключается content script.
-- Ошибка соединения больше не запускает часовой запрет ручной попытки; ограничение 429 по-прежнему соблюдается.
-- Сохранён календарь первой даты недельного бэкапа, добавленный в v0.1.1.
+- New monochrome archive-box icon in browser extension (16, 48 and 128 px) and scalable SVG source.
+- New **Проверить подключение к ChatGPT** command: checks for an open ChatGPT tab, tests the content-script channel and attempts safe local reinjection without sending any ChatGPT API requests.
+- Diagnostic results are persisted separately from historical errors, and events are written to the journal with timestamps and codes.
+- The UI explicitly notes that old journal errors persist after an extension update.
+- Adds mock-runtime smoke tests for content-script messaging and a packaging check for the extension's icons.
+- Release builds are gated by npm build and tests.
 
-**Важно:** внутренние API ChatGPT недокументированы; полноценный тест экспорта на авторизованном аккаунте не выполнен. Бэкап файлов вложений, памяти и инструкций проектов отсутствует. Вне магазина установка требует ручного подтверждения браузером.
+**Known limits:** live ChatGPT API collection remains experimental. Passing smoke tests is not a live account integration test. Previous snapshots stay local; attachments, memory and project instructions are not downloaded.

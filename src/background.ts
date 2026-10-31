@@ -45,6 +45,28 @@ async function ensureCollector(tabId:number):Promise<void>{
   const check=await chrome.tabs.sendMessage(tabId,{type:'CV_PING'});
   if(!check?.ok)throw Error('Сборщик недоступен после подключения к вкладке');
 }
+async function diagnoseConnection():Promise<{ok:boolean,code:string,message:string,at:string}>{
+  const at=new Date().toISOString();let ok=false,code='UNKNOWN',message='';
+  try{
+    const tab=await findTab();
+    if(!tab || typeof tab.id!=='number'){code='NO_CHATGPT_TAB';message='Откройте chatgpt.com в этом профиле браузера.';}
+    else{
+      await ensureCollector(tab.id);
+      ok=true;code='COLLECTOR_READY';message='Вкладка ChatGPT отвечает. Проверка без запросов к ChatGPT API; получение самих чатов ещё не проверялось.';
+    }
+  }catch(e){
+    code='COLLECTOR_UNAVAILABLE';
+    const detail=String(e);
+    message=/Cannot access|permission|not permitted|denied|Missing host/i.test(detail)
+      ? 'Не разрешён доступ расширения к вкладке ChatGPT. Проверьте разрешения сайта у расширения.'
+      : 'Нет ответа от сборщика. Перезагрузите вкладку ChatGPT (F5), затем повторите проверку.';
+    message+=' Детали: '+detail;
+  }
+  const diagnostics={ok,code,message,at};
+  await chrome.storage.local.set({diagnostics});
+  await addLog(ok?'info':'warning','Диагностика ['+code+']: '+message);
+  return diagnostics;
+}
 async function checkDue():Promise<void>{
   const cfg=await getSettings(), s=await getState();
   if(s.activeRunId)return;
@@ -130,8 +152,11 @@ chrome.tabs.onUpdated.addListener((_tabId:number,change:any,tab:any)=>{if(change
 chrome.tabs.onRemoved.addListener((id:number)=>{if(runTabId===id)void(async()=>{const s=await getState();if(s.activeRunId)await finish(s.activeRunId,s.discovered,['Вкладка ChatGPT закрыта во время экспорта']);})();});
 chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void)=>{
   if(m?.target==='offscreen')return false;
+  if(m?.type==='CV_DIAGNOSE'){
+    void diagnoseConnection().then(v=>send(v)).catch(e=>send({ok:false,code:'DIAGNOSTIC_ERROR',message:String(e)}));return true;
+  }
   if(m?.type==='CV_GET_STATUS'){
-    void(async()=>{const [settings,state,snapshot,logs,allSnapshots]=await Promise.all([getSettings(),getState(),recentSnapshot(),readAll(STORE.logs),readAll(STORE.snapshots)]);send({ok:true,settings,state,snapshot,snapshotCount:allSnapshots.length,logs:logs.slice(-12).reverse()});})().catch((e)=>send({ok:false,error:String(e)}));return true;
+    void(async()=>{const [settings,state,snapshot,logs,allSnapshots]=await Promise.all([getSettings(),getState(),recentSnapshot(),readAll(STORE.logs),readAll(STORE.snapshots)]);const stored=await chrome.storage.local.get('diagnostics');send({ok:true,settings,state,snapshot,snapshotCount:allSnapshots.length,logs:logs.slice(-12).reverse(),diagnostics:stored.diagnostics||null});})().catch((e)=>send({ok:false,error:String(e)}));return true;
   }
   if(m?.type==='CV_SAVE_SETTINGS'){
     void(async()=>{
