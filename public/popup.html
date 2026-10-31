@@ -65,6 +65,9 @@ button[hidden],.view[hidden]{display:none!important}
 .logtime{color:var(--muted);font-size:10px}
 .loglevel{text-transform:uppercase;font-size:10px;font-weight:700;color:var(--muted)}
 .footnote{font-size:10px;color:var(--muted);line-height:1.45}
+.action-result{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:var(--soft);line-height:1.5}
+.log-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.log-actions button{padding:8px 9px;font-size:11px}
 </style>
 </head>
 <body>
@@ -94,13 +97,22 @@ button[hidden],.view[hidden]{display:none!important}
    <div class="actions">
      <button id="backup" class="primary">Сделать копию сейчас</button>
      <button id="download" class="secondary">Скачать последний ZIP</button>
+     <p id="actionResult" class="action-result" role="status" aria-live="polite"></p>
    </div>
    <div class="linkline"><span id="connectionSummary">Связь не проверена</span><button id="showJournal" class="textlink">Журнал и диагностика</button></div>
  </section>
  <section id="view-journal" class="view" hidden>
    <div class="view-heading"><h2 class="title">Журнал событий</h2><button class="textlink" data-back="home">На главную</button></div>
    <div class="card"><div class="row"><h3 class="title">Подключение</h3><span id="diagnosticCode" class="pill">Не проверено</span></div><p id="diagnosticResult" class="hint">Диагностика не запускалась.</p><button id="diagnose" class="secondary" style="margin-top:10px">Проверить подключение</button></div>
-   <div class="card"><div class="row" style="margin-bottom:8px"><h3 class="title">Последние события</h3><span class="hint">До 12 записей</span></div><div id="logs">Нет событий</div></div>
+   <div class="card">
+     <div class="row" style="margin-bottom:9px"><h3 class="title">Журнал событий</h3><span class="hint">До 12 записей на экране</span></div>
+     <div class="log-actions">
+       <button id="copyLogs" class="secondary" type="button">Скопировать всё</button>
+       <button id="downloadLogs" class="secondary" type="button">Скачать .txt</button>
+     </div>
+     <p id="logExportStatus" class="hint" role="status" aria-live="polite"></p>
+     <div id="logs">Нет событий</div>
+   </div>
    <div class="footnote">Старые ошибки остаются в истории после обновления. Диагностика проверяет связь с вкладкой, а не полноту бэкапа.</div>
  </section>
  <section id="view-settings" class="view" hidden>

@@ -47,7 +47,9 @@ async function refresh():Promise<void>{
     badge.className='pill '+(state.status==='complete'?'ok':/failed|partial|interrupted/.test(state.status)?'bad':'');
     badge.textContent=({complete:'Сохранено',running:'Сбор…',partial:'Неполная',failed:'Ошибка','waiting-tab':'Ждёт вкладку',interrupted:'Прервано',idle:'Готово'} as Record<string,string>)[state.status]||state.status;
     ($('backup') as HTMLButtonElement).disabled=state.status==='running';
-    ($('download') as HTMLButtonElement).disabled=!snapshot?.entries?.length;
+    const canDownload=!!snapshot?.entries?.length;
+    ($('download') as HTMLButtonElement).disabled=!canDownload;
+    ($('download') as HTMLButtonElement).title=canDownload?'Скачать архив последней доступной копии':'Пока нет сохранённых переписок для ZIP';
     text('connectionSummary',diagnostics?(diagnostics.ok?'Связь с ChatGPT: есть':'Связь с ChatGPT: ошибка'):'Связь не проверена');
     text('diagnosticCode',diagnostics?diagnostics.code:'Не проверено');
     text('diagnosticResult',diagnostics?(date(diagnostics.at)+' · '+diagnostics.message):'Диагностика не запускалась.');
@@ -92,18 +94,59 @@ $('diagnose').addEventListener('click',()=>void(async()=>{
   finally{($('diagnose') as HTMLButtonElement).disabled=false;await refresh();}
 })());
 $('backup').addEventListener('click',()=>void(async()=>{
-  ($('backup') as HTMLButtonElement).disabled=true;
+  const button=$('backup') as HTMLButtonElement;
+  button.disabled=true;
+  text('actionResult','Отправляю команду запуска…');
   try{
     const r=await message('CV_BACKUP_NOW');
-    if(!r?.ok)text('notice',r?.message||r?.error||'Ошибка запуска');
-  }catch(e){text('notice','Ошибка запуска: '+String(e));}
-  finally{await refresh();}
+    text('actionResult',(r?.ok?'Команда принята: ':'Запуск не выполнен: ')+(r?.message||r?.error||'Нет ответа'));
+  }catch(e){
+    text('actionResult','Ошибка обращения к расширению: '+String(e));
+  }finally{
+    await refresh();
+  }
 })());
 $('download').addEventListener('click',()=>void(async()=>{
+  text('actionResult','Готовлю ZIP…');
   try{
     const r=await message('CV_EXPORT');
-    text('notice',r?.ok?'ZIP передан в загрузки браузера':r?.error||'Ошибка скачивания');
-  }catch(e){text('notice',String(e));}
+    text('actionResult',r?.ok?'Загрузка ZIP запущена':r?.error||'Ошибка скачивания');
+  }catch(e){text('actionResult','Ошибка ZIP: '+String(e));}
+})());
+async function getDiagnosticText():Promise<string>{
+  const r=await message('CV_GET_REPORT');
+  if(!r?.ok || typeof r.report!=='string')throw Error(r?.error||'Не удалось прочитать журнал');
+  return r.report;
+}
+$('copyLogs').addEventListener('click',()=>void(async()=>{
+  const button=$('copyLogs') as HTMLButtonElement;button.disabled=true;
+  try{
+    const report=await getDiagnosticText();
+    try{await navigator.clipboard.writeText(report);}
+    catch{
+      const field=document.createElement('textarea');
+      field.value=report;field.style.position='fixed';field.style.opacity='0';
+      document.body.appendChild(field);field.select();
+      const copied=document.execCommand('copy');field.remove();
+      if(!copied)throw Error('Не удалось записать данные в буфер обмена');
+    }
+    text('logExportStatus','Полный журнал скопирован в буфер обмена.');
+  }catch(e){text('logExportStatus','Ошибка копирования: '+String(e));}
+  finally{button.disabled=false;}
+})());
+$('downloadLogs').addEventListener('click',()=>void(async()=>{
+  const button=$('downloadLogs') as HTMLButtonElement;button.disabled=true;
+  try{
+    const report=await getDiagnosticText();
+    const blob=new Blob(['\uFEFF',report],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    const a=document.createElement('a');a.href=url;a.download='ChatVault-diagnostics-'+stamp+'.txt';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    text('logExportStatus','Загрузка TXT начата. Файл содержит все события и диагностические сведения, без переписок.');
+  }catch(e){text('logExportStatus','Ошибка выгрузки: '+String(e));}
+  finally{button.disabled=false;}
 })());
 showView(currentView);
 void refresh();

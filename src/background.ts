@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS, nextWeekly, type Settings } from './model.js';
 import {addLog, appendChat, finalizeSnapshot, recentSnapshot, startSnapshot, readAll, STORE, putOne} from './db.js';
-import type {Snapshot} from './model.js';
+import type {Snapshot, Log} from './model.js';
+import {formatDiagnosticReport} from './report.js';
 const WEEKLY='chatvault-weekly', RETRY='chatvault-catchup';
 let runTabId:number|null=null;
 let creatingOffscreen:Promise<void>|null=null;
@@ -158,6 +159,20 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
   if(m?.type==='CV_GET_STATUS'){
     void(async()=>{const [settings,state,snapshot,logs,allSnapshots]=await Promise.all([getSettings(),getState(),recentSnapshot(),readAll(STORE.logs),readAll(STORE.snapshots)]);const stored=await chrome.storage.local.get('diagnostics');send({ok:true,settings,state,snapshot,snapshotCount:allSnapshots.length,logs:logs.slice(-12).reverse(),diagnostics:stored.diagnostics||null});})().catch((e)=>send({ok:false,error:String(e)}));return true;
   }
+  if(m?.type==='CV_GET_REPORT'){
+    void(async()=>{
+      const [logs,state,stored]=await Promise.all([readAll<Log>(STORE.logs),getState(),chrome.storage.local.get('diagnostics')]);
+      const {status,notice,activeRunId,lastSuccessAt,nextDueAt,current,discovered,backoffUntil}=state;
+      const report=formatDiagnosticReport({
+        version:chrome.runtime.getManifest().version,
+        createdAt:new Date().toISOString(),
+        state:{status,notice,activeRunId,lastSuccessAt,nextDueAt,current,discovered,backoffUntil},
+        diagnostics:stored.diagnostics||null,
+        logs
+      });
+      send({ok:true,report});
+    })().catch(e=>send({ok:false,error:String(e)}));return true;
+  }
   if(m?.type==='CV_SAVE_SETTINGS'){
     void(async()=>{
       const previous=await getSettings();
@@ -179,7 +194,16 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
     })().catch((e)=>send({ok:false,error:String(e)}));return true;
   }
   if(m?.type==='CV_BACKUP_NOW'){
-    void runBackup(true).then(send).catch(e=>send({ok:false,message:String(e)}));return true;
+    void(async()=>{
+      await addLog('info','Нажата кнопка ручного резервного копирования');
+      const result=await runBackup(true);
+      await addLog(result.ok?'info':'warning','Ручной запуск: '+result.message);
+      send(result);
+    })().catch(async e=>{
+      const message='Ошибка запуска: '+String(e);
+      try{await addLog('error',message);}catch{}
+      send({ok:false,message});
+    });return true;
   }
   if(m?.type==='CV_EXPORT'){
     void(async()=>{const s=await getState();const id=m.snapshotId||s.lastSnapshotId||(await recentSnapshot())?.id;if(!id)throw Error('Нет сохранённых снимков');await downloadSnapshot(id);send({ok:true});})().catch((e)=>send({ok:false,error:String(e)}));return true;

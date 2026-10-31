@@ -1,6 +1,6 @@
 {
   "name": "chatvault",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "description": "Local-first snapshot backups for ChatGPT conversations (experimental)",
   "scripts": {
