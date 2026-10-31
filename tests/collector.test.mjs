@@ -50,3 +50,32 @@ test('zero chat result cannot be treated as success',async()=>{
  const r=await run({routes:{[url]:respond({items:[],total:0})}});
  assert.equal(r.result.type,'CV_FAILED');assert.match(r.result.error,/Найдено 0/);
 });
+
+test('project chat bodies are persisted before a later general-list 429',async()=>{
+ const general='/backend-api/conversations?offset=0&limit=100&order=updated';
+ const routes={
+  '/backend-api/gizmos/g-p-abc/conversations?cursor=0':respond({items:[{id:'A'},{id:'B'}]}),
+  '/backend-api/conversation/A':respond({mapping:{}}),
+  '/backend-api/conversation/B':respond({mapping:{}}),
+  [general]:respond({},429,{'retry-after':'60'})
+ };
+ const r=await run({links:['/g/g-p-abc/example'],routes});
+ assert.equal(r.result.type,'CV_FAILED');
+ assert.match(r.result.error,/\[general list\] 429/);
+ assert.equal(r.result.discovered,2);
+ assert.deepEqual(r.messages.filter(m=>m.type==='CV_ITEM').map(m=>m.item.id),['A','B']);
+ assert.ok(r.requests.indexOf('/backend-api/conversation/B')<r.requests.indexOf(general));
+ assert.equal(r.requests.filter(x=>x===general).length,1);
+});
+test('a detail 429 stops further fetching and leaves prior items saved',async()=>{
+ const routes={
+  '/backend-api/gizmos/g-p-abc/conversations?cursor=0':respond({items:[{id:'A'},{id:'B'}]}),
+  '/backend-api/conversation/A':respond({mapping:{}}),
+  '/backend-api/conversation/B':respond({},429,{'retry-after':'60'})
+ };
+ const r=await run({links:['/g/g-p-abc/example'],routes});
+ assert.equal(r.result.type,'CV_FAILED');
+ assert.match(r.result.error,/\[detail B\] 429/);
+ assert.deepEqual(r.messages.filter(m=>m.type==='CV_ITEM').map(m=>m.item.id),['A']);
+ assert.equal(r.requests.some(x=>x.includes('/backend-api/conversations?')),false);
+});
