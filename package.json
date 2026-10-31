@@ -1,0 +1,16 @@
+{
+  "name": "chatvault",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first snapshot backups for ChatGPT conversations (experimental)",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/copy-public.mjs",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "license": "MIT",
+  "type": "module"
+}

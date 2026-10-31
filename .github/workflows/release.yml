@@ -1,0 +1,38 @@
+name: Release v0.1.0
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install, build and test
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm test
+      - name: Package extension and sources
+        run: |
+          cd dist
+          zip -q -r ../ChatVault-v0.1.0-extension.zip .
+          cd ..
+          git archive --format=zip --prefix=chatvault-v0.1.0/ --output=ChatVault-v0.1.0-source.zip HEAD
+          sha256sum ChatVault-v0.1.0-extension.zip ChatVault-v0.1.0-source.zip > SHA256SUMS.txt
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v0.1.0 >/dev/null 2>&1; then
+            echo 'Release v0.1.0 already exists'
+            exit 0
+          fi
+          gh release create v0.1.0 ChatVault-v0.1.0-extension.zip ChatVault-v0.1.0-source.zip SHA256SUMS.txt --title 'ChatVault v0.1.0 — experimental' --notes-file RELEASE_NOTES.md --target "$GITHUB_SHA" --prerelease
