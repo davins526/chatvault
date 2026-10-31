@@ -27,6 +27,16 @@ ChatVault is a browser extension for preserving accessible ChatGPT conversations
 - Настройка другого дня/времени в пользовательском интерфейсе (в v0.1 расписание фиксировано).
 - Миграция всех альтернативных вариантов в Markdown: они присутствуют в `conversation.raw.json` как исходный граф, а Markdown включает только активную ветку.
 
+## Windows EXE setup (Brave / Chrome)
+
+**[Download ChatVault-Setup-v0.1.0.exe](https://github.com/davins526/chatvault/releases/download/v0.1.0/ChatVault-Setup-v0.1.0.exe)** from the [v0.1.0 experimental release](https://github.com/davins526/chatvault/releases/tag/v0.1.0).
+
+This is a **Windows installer assistant**, not a one-click browser extension sideload: Chrome and Brave require user confirmation for extensions that are not published in the Chrome Web Store. The EXE copies the extension to `%LOCALAPPDATA%\ChatVault\Extension`, adds a Windows uninstall entry, and displays an installation guide. Administrator privileges are not required.
+
+After running the installer, open `brave://extensions` (or `chrome://extensions`), enable **Developer mode**, select **Load unpacked**, and choose `%LOCALAPPDATA%\ChatVault\Extension`. This final browser step cannot be automated by the installer.
+
+The NSIS source is in [installer/ChatVault.nsi](installer/ChatVault.nsi), and [GitHub Actions](.github/workflows/windows-installer.yml) builds the EXE on a Windows runner and attaches it to the release. A SHA-256 checksum is provided alongside the EXE.
+
 ## Установка в Brave / Chrome
 
 1. Скачайте [сборку](./dist/) из релиза или ZIP репозитория и распакуйте её.
