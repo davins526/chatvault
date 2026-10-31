@@ -1,9 +1,10 @@
-# ChatVault v0.1.8 — Partial Backup Recovery
+# ChatVault v0.1.9 — Rate-limit countdown and partial-backup access
 
-- Backup now saves each conversation's raw JSON to local IndexedDB immediately after its listing page is fetched, before requesting subsequent listing pages.
-- If a later project/general-list request returns HTTP 429, already stored chat revisions remain in a partial snapshot and can be downloaded as a ZIP.
-- HTTP 429 still stops further requests immediately and retains the existing cooldown. No retry or rate-limit workaround was introduced.
-- Regression tests check that project chats are stored before a 429 in general listing, and that a 429 while fetching a later detail keeps earlier items.
-- Historical backups and settings remain unchanged.
+- При HTTP 429 кнопка ручного резервирования блокируется до истечения backoffUntil; виден локальный обратный отсчёт и точное время следующей разрешённой попытки.
+- Фоновый обработчик не засоряет журнал повторяющимися отказами при нажатиях во время ограничения (продолжает соблюдать серверный лимит).
+- На главной отображается прогресс «сохранено / найдено на текущий момент» во время сбора.
+- Если последняя попытка ничего не сохранила, можно выгрузить предыдущий непустой снимок. Неполные копии обозначаются отдельно.
+- Скачивание старой/неполной копии не требует обращений к API ChatGPT.
+- Добавлены тесты обратного отсчёта и выбора последней доступной копии.
 
-**Limitations:** Full real-account retrieval has not been integration-tested; a 429 on the first detail may still result in zero saved chats. Undocumented API endpoints may change; attachments and standalone project instructions are unsupported.
+**Важно:** HTTP 429 по-прежнему останавливает запросы; интерфейс не гарантирует, что все переписки обнаружены. Реальная авторизованная выгрузка требует проверки, вложения и инструкции проектов пока не скачиваются.

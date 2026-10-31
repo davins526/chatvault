@@ -2,6 +2,23 @@ const $=(id:string)=>document.getElementById(id) as HTMLElement;
 const time=(value:number|null|undefined)=>value?new Date(value).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'нет';
 const date=(value:string|null|undefined)=>value?new Date(value).toLocaleString('ru-RU'):'нет';
 const message=async(type:string,args:any={})=>chrome.runtime.sendMessage({type,...args});
+import {remainingCooldownSeconds,formatCountdown} from './backup-ui.js';
+type BackupViewState={status:string;backoffUntil:number|null;current:number;discovered:number|null};
+let lastBackupState:BackupViewState|null=null;
+let backupRequestPending=false;
+function updateBackupButton(){
+ const button=$('backup') as HTMLButtonElement;
+ const note=$('cooldownNote');
+ const remaining=remainingCooldownSeconds(lastBackupState?.backoffUntil,Date.now());
+ const blocked=remaining>0;
+ button.disabled=blocked || lastBackupState?.status==='running' || backupRequestPending;
+ button.textContent=blocked?'HTTP 429 · '+formatCountdown(remaining):lastBackupState?.status==='running'?'Копирование…':'Сделать копию сейчас';
+ note.hidden=!blocked;
+ if(blocked){
+   const due=new Date(lastBackupState!.backoffUntil!).toLocaleString('ru-RU');
+   note.textContent='Сервер ограничил запросы. Следующая ручная попытка после '+due+'. До этого осталось '+formatCountdown(remaining)+'.';
+ }
+}
 function text(id:string,value:string){$(id).textContent=value;}
 let currentView='home';
 function showView(view:string){
@@ -30,26 +47,37 @@ async function refresh():Promise<void>{
   try{
     const res=await message('CV_GET_STATUS');
     if(!res?.ok)throw Error(res?.error||'Не удалось получить состояние');
-    const {settings,state,snapshot,logs,snapshotCount,diagnostics}=res;
+    const {settings,state,snapshot,logs,snapshotCount,diagnostics,downloadableSnapshot}=res;
+    lastBackupState={status:state.status,backoffUntil:state.backoffUntil??null,current:state.current||0,discovered:state.discovered??null};
     if(document.activeElement!==$('enabled'))($('enabled') as HTMLInputElement).checked=!!settings.enabled;
     if(document.activeElement!==$('autoDownload'))($('autoDownload') as HTMLInputElement).checked=!!settings.autoDownload;
     const input=$('startDate') as HTMLInputElement;
     if(document.activeElement!==input)input.value=settings.startDate||'';
     applyTheme(settings.theme==='light'?'light':'dark');
     text('scheduleInfo',settings.startDate?'Каждые 7 дней от выбранной даты · 20:00':'По умолчанию: воскресенье, 20:00');
-    text('notice',shortStatus(state.status,state.notice));
+    const cooldown=remainingCooldownSeconds(state.backoffUntil,Date.now())>0;
+    text('notice',cooldown?'Ожидание после HTTP 429. Подробности и время разблокировки — ниже.':shortStatus(state.status,state.notice));
+    const progress=$('progressBlock');
+    const saved=state.status==='running'?state.current||0:snapshot?.entries?.length||0;
+    const discovered=state.discovered??snapshot?.discovered??null;
+    progress.hidden=!(state.status==='running'||(state.status==='partial'&&saved>0));
+    text('progressText',discovered===null?String(saved)+' сохранено':String(saved)+' из '+String(discovered));
+    const bar=$('progressBar') as HTMLProgressElement;
+    bar.max=Math.max(1,discovered||saved);
+    bar.value=Math.min(saved,bar.max);
     text('count',String(snapshot?.entries?.length||0));
     text('versions',String(snapshotCount||0));
     text('changes',String(snapshot?.changed||0));
     text('last',time(state.lastSuccessAt));
     text('next',settings.enabled?time(state.nextDueAt):'Выключено');
     const badge=$('badge');
-    badge.className='pill '+(state.status==='complete'?'ok':/failed|partial|interrupted/.test(state.status)?'bad':'');
-    badge.textContent=({complete:'Сохранено',running:'Сбор…',partial:'Неполная',failed:'Ошибка','waiting-tab':'Ждёт вкладку',interrupted:'Прервано',idle:'Готово'} as Record<string,string>)[state.status]||state.status;
-    ($('backup') as HTMLButtonElement).disabled=state.status==='running';
-    const canDownload=!!snapshot?.entries?.length;
+    badge.className='pill '+(!cooldown&&state.status==='complete'?'ok':cooldown||/failed|partial|interrupted/.test(state.status)?'bad':'');
+    badge.textContent=cooldown?'HTTP 429':({complete:'Сохранено',running:'Сбор…',partial:'Неполная',failed:'Ошибка','waiting-tab':'Ждёт вкладку',interrupted:'Прервано',idle:'Готово'} as Record<string,string>)[state.status]||state.status;
+    updateBackupButton();
+    const canDownload=!!downloadableSnapshot?.id;
     ($('download') as HTMLButtonElement).disabled=!canDownload;
-    ($('download') as HTMLButtonElement).title=canDownload?'Скачать архив последней доступной копии':'Пока нет сохранённых переписок для ZIP';
+    ($('download') as HTMLButtonElement).textContent=downloadableSnapshot?.status==='partial'?'Скачать неполную копию (ZIP)':'Скачать последний ZIP';
+    ($('download') as HTMLButtonElement).title=canDownload?'Сохранено '+downloadableSnapshot.count+' чатов; неполный архив можно скачать без новых запросов к ChatGPT':'Пока нет сохранённых переписок для ZIP';
     text('connectionSummary',diagnostics?(diagnostics.ok?'Связь с ChatGPT: есть':'Связь с ChatGPT: ошибка'):'Связь не проверена');
     text('diagnosticCode',diagnostics?diagnostics.code:'Не проверено');
     text('diagnosticResult',diagnostics?(date(diagnostics.at)+' · '+diagnostics.message):'Диагностика не запускалась.');
@@ -95,7 +123,8 @@ $('diagnose').addEventListener('click',()=>void(async()=>{
 })());
 $('backup').addEventListener('click',()=>void(async()=>{
   const button=$('backup') as HTMLButtonElement;
-  button.disabled=true;
+  backupRequestPending=true;
+  updateBackupButton();
   text('actionResult','Отправляю команду запуска…');
   try{
     const r=await message('CV_BACKUP_NOW');
@@ -103,6 +132,7 @@ $('backup').addEventListener('click',()=>void(async()=>{
   }catch(e){
     text('actionResult','Ошибка обращения к расширению: '+String(e));
   }finally{
+    backupRequestPending=false;
     await refresh();
   }
 })());
@@ -110,7 +140,7 @@ $('download').addEventListener('click',()=>void(async()=>{
   text('actionResult','Готовлю ZIP…');
   try{
     const r=await message('CV_EXPORT');
-    text('actionResult',r?.ok?'Загрузка ZIP запущена':r?.error||'Ошибка скачивания');
+    text('actionResult',r?.ok?(r.partial?'Загрузка неполного ZIP начата ('+r.count+' чатов).':'Загрузка ZIP запущена'):r?.error||'Ошибка скачивания');
   }catch(e){text('actionResult','Ошибка ZIP: '+String(e));}
 })());
 async function getDiagnosticText():Promise<string>{
@@ -151,3 +181,4 @@ $('downloadLogs').addEventListener('click',()=>void(async()=>{
 showView(currentView);
 void refresh();
 setInterval(()=>void refresh(),5000);
+setInterval(updateBackupButton,1000);

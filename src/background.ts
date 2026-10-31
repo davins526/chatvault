@@ -3,6 +3,7 @@ import {addLog, appendChat, finalizeSnapshot, recentSnapshot, startSnapshot, rea
 import type {Snapshot, Log} from './model.js';
 import {formatDiagnosticReport} from './report.js';
 import {isRateLimitError,shouldClearLegacyCooldown} from './retry.js';
+import {latestDownloadableSnapshot} from './backup-ui.js';
 const WEEKLY='chatvault-weekly', RETRY='chatvault-catchup';
 let runTabId:number|null=null;
 let creatingOffscreen:Promise<void>|null=null;
@@ -170,7 +171,7 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
     void diagnoseConnection().then(v=>send(v)).catch(e=>send({ok:false,code:'DIAGNOSTIC_ERROR',message:String(e)}));return true;
   }
   if(m?.type==='CV_GET_STATUS'){
-    void(async()=>{const [settings,state,snapshot,logs,allSnapshots]=await Promise.all([getSettings(),getState(),recentSnapshot(),readAll(STORE.logs),readAll(STORE.snapshots)]);const stored=await chrome.storage.local.get('diagnostics');send({ok:true,settings,state,snapshot,snapshotCount:allSnapshots.length,logs:logs.slice(-12).reverse(),diagnostics:stored.diagnostics||null});})().catch((e)=>send({ok:false,error:String(e)}));return true;
+    void(async()=>{const [settings,state,snapshot,logs,allSnapshots]=await Promise.all([getSettings(),getState(),recentSnapshot(),readAll(STORE.logs),readAll<Snapshot>(STORE.snapshots)]);const stored=await chrome.storage.local.get('diagnostics');const exportable=latestDownloadableSnapshot(allSnapshots);send({ok:true,settings,state,snapshot,snapshotCount:allSnapshots.length,downloadableSnapshot:exportable?{id:exportable.id,status:exportable.status,count:exportable.entries.length,createdAt:exportable.createdAt}:null,logs:logs.slice(-12).reverse(),diagnostics:stored.diagnostics||null});})().catch((e)=>send({ok:false,error:String(e)}));return true;
   }
   if(m?.type==='CV_GET_REPORT'){
     void(async()=>{
@@ -208,6 +209,11 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
   }
   if(m?.type==='CV_BACKUP_NOW'){
     void(async()=>{
+      const state=await reconcileLegacyCooldown();
+      if(state.backoffUntil && state.backoffUntil>Date.now()){
+        send({ok:false,code:'RATE_LIMITED',backoffUntil:state.backoffUntil,message:'HTTP 429: повторная попытка доступна после '+new Date(state.backoffUntil).toLocaleString('ru-RU')});
+        return;
+      }
       await addLog('info','Нажата кнопка ручного резервного копирования');
       const result=await runBackup(true);
       await addLog(result.ok?'info':'warning','Ручной запуск: '+result.message);
@@ -219,7 +225,7 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
     });return true;
   }
   if(m?.type==='CV_EXPORT'){
-    void(async()=>{const s=await getState();const id=m.snapshotId||s.lastSnapshotId||(await recentSnapshot())?.id;if(!id)throw Error('Нет сохранённых снимков');await downloadSnapshot(id);send({ok:true});})().catch((e)=>send({ok:false,error:String(e)}));return true;
+    void(async()=>{const all=await readAll<Snapshot>(STORE.snapshots);const id=m.snapshotId||latestDownloadableSnapshot(all)?.id;if(!id)throw Error('Нет сохранённых переписок для ZIP');const chosen=all.find(x=>x.id===id);if(!chosen||!chosen.entries.length||chosen.status==='running')throw Error('Выбранный снимок ещё не готов для скачивания');await downloadSnapshot(id);send({ok:true,snapshotId:id,partial:chosen.status!=='complete',count:chosen.entries.length});})().catch((e)=>send({ok:false,error:String(e)}));return true;
   }
   const items=new Set(['CV_DISCOVERED','CV_ITEM','CV_DONE','CV_FAILED']);
   if(items.has(m?.type)){
