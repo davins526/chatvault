@@ -1,10 +1,9 @@
-# ChatVault v0.1.6 — Exportable Diagnostics & Visible Backup Feedback
+# ChatVault v0.1.7 — Legacy Cooldown Hotfix
 
-- Журнал: кнопки **«Скопировать всё»** и **«Скачать .txt»** (все накопленные события, а не только 12 последних).
-- Отчёт содержит версию, дату, статус копирования, состояние и результат проверки подключения. Не содержит содержимого переписок; токены редактируются перед экспортом.
-- На главной результат ручного запуска и попытки скачать ZIP теперь отображается в отдельной строке и не стирается автообновлением.
-- Каждая ручная попытка запуска создаёт диагностическое событие, даже если экспорт не стартовал.
-- Добавлены тесты формирования диагностического отчёта и редактирования токенов.
-- История IndexedDB и настройки расширения при обновлении сохраняются.
+- Removes stale cooldowns left by earlier connection errors. Previous previews incorrectly blocked manual backups for an hour after transport failures.
+- Preserves valid HTTP 429 cooldowns and Retry-After: the extension does not bypass rate limiting.
+- Automatically logs the correction after updating, without deleting historical logs or backup data.
+- Persists the active ChatGPT tab ID across Manifest V3 service worker restarts.
+- Adds regression tests for stale cooldown, valid 429 and expired cooldown.
 
-**Ограничения:** реальный экспорт чатов через недокументированный API требует пользовательской проверки. До появления хотя бы одной записи чата ZIP скачать нельзя.
+**Limitations:** Live authenticated backup has not been verified. Scheduled backups still need a running browser and a logged-in ChatGPT tab.

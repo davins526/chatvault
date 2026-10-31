@@ -2,16 +2,28 @@ import { DEFAULT_SETTINGS, nextWeekly, type Settings } from './model.js';
 import {addLog, appendChat, finalizeSnapshot, recentSnapshot, startSnapshot, readAll, STORE, putOne} from './db.js';
 import type {Snapshot, Log} from './model.js';
 import {formatDiagnosticReport} from './report.js';
+import {isRateLimitError,shouldClearLegacyCooldown} from './retry.js';
 const WEEKLY='chatvault-weekly', RETRY='chatvault-catchup';
 let runTabId:number|null=null;
 let creatingOffscreen:Promise<void>|null=null;
 let starting=false;
 
-type State = {nextDueAt:number|null;lastSuccessAt:number|null;lastSnapshotId:string|null;activeRunId:string|null;pendingManual:boolean;lastAttemptAt:number|null; backoffUntil:number|null; status:string; notice:string; current:number; discovered:number|null};
-const INITIAL:State = {nextDueAt:null,lastSuccessAt:null,lastSnapshotId:null,activeRunId:null,pendingManual:false,lastAttemptAt:null,backoffUntil:null,status:'idle',notice:'Расписание включено. Ожидание первого резервирования.',current:0,discovered:null};
+type State = {nextDueAt:number|null;lastSuccessAt:number|null;lastSnapshotId:string|null;activeRunId:string|null;activeTabId:number|null;pendingManual:boolean;lastAttemptAt:number|null; backoffUntil:number|null; status:string; notice:string; current:number; discovered:number|null};
+const INITIAL:State = {nextDueAt:null,lastSuccessAt:null,lastSnapshotId:null,activeRunId:null,activeTabId:null,pendingManual:false,lastAttemptAt:null,backoffUntil:null,status:'idle',notice:'Расписание включено. Ожидание первого резервирования.',current:0,discovered:null};
 async function getSettings():Promise<Settings>{const v=await chrome.storage.local.get('settings');return {...DEFAULT_SETTINGS,...v.settings};}
 async function getState():Promise<State>{const v=await chrome.storage.local.get('state');return {...INITIAL,...v.state};}
 async function updateState(delta:Partial<State>):Promise<State>{const next={...await getState(),...delta};await chrome.storage.local.set({state:next});return next;}
+async function reconcileLegacyCooldown():Promise<State>{
+  const s=await getState();
+  if(s.backoffUntil===null)return s;
+  const logs=await readAll<Log>(STORE.logs);
+  const latestError=[...logs].reverse().find(x=>x.level==='error');
+  if(!shouldClearLegacyCooldown(s.backoffUntil,Date.now(),latestError?.message))return s;
+  await chrome.alarms.clear(RETRY);
+  const updated=await updateState({backoffUntil:null});
+  if(s.backoffUntil>Date.now())await addLog('info','Снята устаревшая блокировка после ошибки подключения; подтверждения HTTP 429 нет.');
+  return updated;
+}
 async function reschedule():Promise<void>{
   await chrome.alarms.clear(WEEKLY);
   const cfg=await getSettings();if(!cfg.enabled)return;
@@ -32,8 +44,9 @@ async function initialize():Promise<void>{
     if(old?.status==='running'){
       old.status='partial';old.errors.push('Прервано при закрытии вкладки/перезапуске браузера');old.finishedAt=new Date().toISOString();await putOne(STORE.snapshots,old);
     }
-    await updateState({activeRunId:null,status:'interrupted',pendingManual:false,notice:'Предыдущая копия прервана; сохранённые ревизии остались локально.'});
+    await updateState({activeRunId:null,activeTabId:null,status:'interrupted',pendingManual:false,notice:'Предыдущая копия прервана; сохранённые ревизии остались локально.'});
   }
+  await reconcileLegacyCooldown();
   await reschedule();await checkDue();
 }
 async function findTab():Promise<any|null>{
@@ -69,7 +82,7 @@ async function diagnoseConnection():Promise<{ok:boolean,code:string,message:stri
   return diagnostics;
 }
 async function checkDue():Promise<void>{
-  const cfg=await getSettings(), s=await getState();
+  const cfg=await getSettings(), s=await reconcileLegacyCooldown();
   if(s.activeRunId)return;
   if(!s.pendingManual && (!cfg.enabled||s.nextDueAt==null||Date.now()<s.nextDueAt))return;
   if(s.backoffUntil&&Date.now()<s.backoffUntil)return;
@@ -79,15 +92,15 @@ async function runBackup(manual:boolean):Promise<{ok:boolean,message:string}>{
   if(starting)return {ok:false,message:'Запуск уже выполняется'};
   starting=true;
   try {
-    const old=await getState();if(old.activeRunId)return {ok:false,message:'Резервное копирование уже идёт'};
-    if(old.backoffUntil&&Date.now()<old.backoffUntil)return {ok:false,message:'После ошибки сервер ограничил запросы. Повторите позже.'};
+    const old=await reconcileLegacyCooldown();if(old.activeRunId)return {ok:false,message:'Резервное копирование уже идёт'};
+    if(old.backoffUntil&&Date.now()<old.backoffUntil)return {ok:false,message:'Действует ограничение HTTP 429 до '+new Date(old.backoffUntil).toLocaleString('ru-RU')+'. Повторите позже.'};
     const tab=await findTab();
     if(!tab){await updateState({pendingManual:manual||old.pendingManual,status:'waiting-tab',notice:'Откройте ChatGPT в этом профиле Brave: копия запустится при доступной вкладке.'});return {ok:false,message:'Нет открытой авторизованной вкладки ChatGPT'};}
     try {await ensureCollector(tab.id);}
     catch(e){await updateState({status:'failed',notice:'Нет соединения с вкладкой ChatGPT. Обновите вкладку и повторите.',pendingManual:false});await addLog('error',String(e));return {ok:false,message:'Не удалось подключить сборщик. Обновите вкладку ChatGPT и повторите.'};}
     const runId=crypto.randomUUID();await startSnapshot(runId);
     runTabId=tab.id;
-    await updateState({activeRunId:runId,pendingManual:false,lastAttemptAt:Date.now(),status:'running',notice:manual?'Ручное копирование…':'Недельное копирование…',current:0,discovered:null});
+    await updateState({activeRunId:runId,activeTabId:tab.id,pendingManual:false,lastAttemptAt:Date.now(),status:'running',notice:manual?'Ручное копирование…':'Недельное копирование…',current:0,discovered:null});
     try {
       const reply=await chrome.tabs.sendMessage(tab.id,{type:'CV_COLLECT',runId});
       if(!reply?.ok)throw Error(reply?.error||'Вкладка не ответила');
@@ -107,15 +120,15 @@ async function finish(runId:string,discovered:number|null,errors:string[]):Promi
   const complete=snapshot.status==='complete' && snapshot.entries.length>0;
   if(!complete){
     const retryMatch=errors.join(' ').match(/Retry-After:\s*(\d+)/i);
-    const limited=errors.some(e=>/\b429\b|лимит запросов/i.test(e));
+    const limited=errors.some(isRateLimitError);
     const cooldown=limited?Math.max(60*60*1000,retryMatch?Number(retryMatch[1])*1000:0):0;
     const backoff=limited?Date.now()+Math.min(cooldown,24*60*60*1000):null;
-    await updateState({activeRunId:null,status:snapshot.entries.length?'partial':'failed',pendingManual:false,notice:`Копия неполная: ${errors[0]||'неизвестная ошибка'}`,backoffUntil:backoff,current:snapshot.entries.length,discovered});
+    await updateState({activeRunId:null,activeTabId:null,status:snapshot.entries.length?'partial':'failed',pendingManual:false,notice:`Копия неполная: ${errors[0]||'неизвестная ошибка'}`,backoffUntil:backoff,current:snapshot.entries.length,discovered});
     if(backoff)await chrome.alarms.create(RETRY,{when:backoff+60000});
     await addLog('error',errors.join('; ')||'Неполная копия');
   } else {
     const next=nextWeekly(new Date(),cfg);
-    await updateState({activeRunId:null,lastSuccessAt:Date.now(),lastSnapshotId:runId,nextDueAt:next,backoffUntil:null,status:'complete',pendingManual:false,notice:`Сохранено ${snapshot.entries.length} чатов. Ссылки на вложения без содержимого.`,current:snapshot.entries.length,discovered});
+    await updateState({activeRunId:null,activeTabId:null,lastSuccessAt:Date.now(),lastSnapshotId:runId,nextDueAt:next,backoffUntil:null,status:'complete',pendingManual:false,notice:`Сохранено ${snapshot.entries.length} чатов. Ссылки на вложения без содержимого.`,current:snapshot.entries.length,discovered});
     await reschedule();await addLog('info',`Снимок ${runId}: ${snapshot.entries.length} чатов, новых ${snapshot.added}, изменено ${snapshot.changed}`);
   }
   if(cfg.autoDownload && snapshot.entries.length>0){
@@ -150,7 +163,7 @@ chrome.alarms.onAlarm.addListener((a:any)=>{if(a.name===WEEKLY||a.name===RETRY)v
 chrome.runtime.onInstalled.addListener(()=>{void initialize();});
 chrome.runtime.onStartup.addListener(()=>{void initialize();});
 chrome.tabs.onUpdated.addListener((_tabId:number,change:any,tab:any)=>{if(change.status==='complete'&&/^https:\/\/(chatgpt\.com|chat\.openai\.com)\//.test(tab.url||''))void checkDue();});
-chrome.tabs.onRemoved.addListener((id:number)=>{if(runTabId===id)void(async()=>{const s=await getState();if(s.activeRunId)await finish(s.activeRunId,s.discovered,['Вкладка ChatGPT закрыта во время экспорта']);})();});
+chrome.tabs.onRemoved.addListener((id:number)=>{void(async()=>{const s=await getState();if(s.activeRunId&&s.activeTabId===id)await finish(s.activeRunId,s.discovered,['Вкладка ChatGPT закрыта во время экспорта']);})().catch(()=>{});});
 chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void)=>{
   if(m?.target==='offscreen')return false;
   if(m?.type==='CV_DIAGNOSE'){
@@ -212,7 +225,7 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
   if(items.has(m?.type)){
     void(async()=>{
       const s=await getState();
-      if(!sender.tab?.id||sender.tab.id!==runTabId||s.activeRunId!==m.runId)throw Error('Неавторизованный или устаревший сеанс резервирования');
+      if(!sender.tab?.id||sender.tab.id!==s.activeTabId||s.activeRunId!==m.runId)throw Error('Неавторизованный или устаревший сеанс резервирования');
       if(m.type==='CV_DISCOVERED'){await updateState({discovered:m.count});send({ok:true});}
       else if(m.type==='CV_ITEM'){
         if(!m.item?.id||!m.item.raw)throw Error('Неполные данные чата');
