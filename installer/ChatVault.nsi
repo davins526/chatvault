@@ -11,7 +11,6 @@ Name "ChatVault v0.1.1"
 OutFile "${OUTPUT_FILE}"
 InstallDir "$LOCALAPPDATA\ChatVault"
 RequestExecutionLevel user
-SetShellVarContext current
 SetCompressor /SOLID lzma
 ShowInstDetails show
 VIProductVersion "0.1.1.0"
