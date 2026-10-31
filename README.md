@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Chromium%20%2F%20Windows-informational)
 
-> **Статус: v0.1.1 — experimental preview.** Код собирается и проходит базовые автоматические тесты, однако реальная работа автоматического сборщика в авторизованном ChatGPT ещё требует полноценного интеграционного тестирования. Не используйте эту версию как единственную резервную копию важных данных.
+> **Статус: v0.1.2 — experimental preview.** Добавлены светлая/тёмная чёрно-белые темы и восстановление связи со вкладкой ChatGPT. Код собирается и проходит базовые автоматические тесты, однако реальная работа автоматического сборщика в авторизованном ChatGPT ещё требует полноценного интеграционного тестирования. Не используйте эту версию как единственную резервную копию важных данных.
 >
 > ChatVault — независимый Open Source проект. Он не связан с OpenAI и не одобрен OpenAI.
 
@@ -22,11 +22,12 @@
 - **Вручную** запускает копирование по кнопке в расширении.
 - **Хранит историю изменений**, не дублируя неизменённые версии в локальной базе.
 - **Скачивает ZIP** с исходным JSON-графом сообщений и читаемым Markdown.
+- **Позволяет переключать чёрно-белую светлую и тёмную темы** с сохранением выбора.
 - **Показывает статус и ошибки**, вместо того чтобы выдавать неудачную выгрузку за успешную.
 
-[**Скачать ChatVault v0.1.1**](https://github.com/davins526/chatvault/releases/tag/v0.1.1) · [Сообщить об ошибке](https://github.com/davins526/chatvault/issues) · [Политика конфиденциальности](PRIVACY.md)
+[**Скачать ChatVault v0.1.2**](https://github.com/davins526/chatvault/releases/tag/v0.1.2) · [Сообщить об ошибке](https://github.com/davins526/chatvault/issues) · [Политика конфиденциальности](PRIVACY.md)
 
-## Функциональность v0.1.1
+## Функциональность v0.1.2
 
 | Возможность | Статус и подробности |
 | --- | --- |
@@ -45,7 +46,7 @@
 | Память, инструкции проектов, отдельные файлы Библиотеки | **Не реализовано** |
 | Импорт бесед в новый аккаунт как оригинальных чатов | **Не поддерживается** |
 | Шифрование архива и базы | **Не реализовано** |
-| Выбор даты первого копирования | **Реализовано в v0.1.1**: календарь в popup; далее раз в неделю в 20:00 |\n| Произвольное время и частота | **Не реализовано**: пока раз в неделю, 20:00 |
+| Выбор даты первого копирования | **Реализовано в v0.1.2**: календарь в popup; далее раз в неделю в 20:00 |\n| Произвольное время и частота | **Не реализовано**: пока раз в неделю, 20:00 |
 
 **Важно:** при каждом бэкапе текущий сборщик снова запрашивает доступный список и содержимое переписок. Повторно **не сохраняются** неизменившиеся версии, но запросы к ChatGPT ещё не являются инкрементальными.
 
@@ -77,18 +78,18 @@
 
 ### Вариант A — Windows Setup (.exe)
 
-[**Скачать ChatVault-Setup-v0.1.1.exe**](https://github.com/davins526/chatvault/releases/download/v0.1.1/ChatVault-Setup-v0.1.1.exe)
+[**Скачать ChatVault-Setup-v0.1.2.exe**](https://github.com/davins526/chatvault/releases/download/v0.1.2/ChatVault-Setup-v0.1.2.exe)
 
 1. Запустите установщик. Он положит файлы в `%LOCALAPPDATA%\ChatVault\Extension`.
 2. Откройте `brave://extensions` или `chrome://extensions`.
 3. Включите **Режим разработчика**.
 4. Нажмите **Загрузить распакованное расширение** и выберите `%LOCALAPPDATA%\ChatVault\Extension`.
 
-Исправление v0.1.1: установка всегда выполняется в папку текущего пользователя; страница выбора каталога удалена, запись в Program Files не требуется. Установщик добавляет возможность удаления через Windows. **Он не подключает расширение к браузеру автоматически:** Chromium требует отдельного подтверждения установки вне официального магазина. EXE не подписан коммерческим сертификатом, поэтому SmartScreen может предупредить о неизвестном издателе.
+Исправление v0.1.2: установка всегда выполняется в папку текущего пользователя; страница выбора каталога удалена, запись в Program Files не требуется. Установщик добавляет возможность удаления через Windows. **Он не подключает расширение к браузеру автоматически:** Chromium требует отдельного подтверждения установки вне официального магазина. EXE не подписан коммерческим сертификатом, поэтому SmartScreen может предупредить о неизвестном издателе.
 
 ### Вариант B — ZIP без установщика
 
-1. Скачайте [**ChatVault-v0.1.1-extension.zip**](https://github.com/davins526/chatvault/releases/download/v0.1.1/ChatVault-v0.1.1-extension.zip).
+1. Скачайте [**ChatVault-v0.1.2-extension.zip**](https://github.com/davins526/chatvault/releases/download/v0.1.2/ChatVault-v0.1.2-extension.zip).
 2. Распакуйте ZIP в **постоянную папку**, которую не будете удалять.
 3. Откройте `brave://extensions` или `chrome://extensions`.
 4. Включите **Режим разработчика** → **Загрузить распакованное расширение**.
@@ -188,8 +189,8 @@ ChatGPT — товарный знак OpenAI. ChatVault не аффилиров�
 
 **ChatVault** is an experimental, privacy-first **Chrome/Brave extension** for local backups of accessible ChatGPT conversations.
 
-**v0.1.1 features:** scheduled weekly backups (Sunday at 20:00 by default, or selected first backup date at 20:00 local time), manual backup, immutable SHA-256-deduplicated revisions in IndexedDB, raw conversation JSON graph preservation, readable active-branch Markdown, local ZIP download, a status popup and error logging.
+**v0.1.2 features:** scheduled weekly backups (Sunday at 20:00 by default, or selected first backup date at 20:00 local time), manual backup, immutable SHA-256-deduplicated revisions in IndexedDB, raw conversation JSON graph preservation, readable active-branch Markdown, local ZIP download, a status popup and error logging.
 
 **Important limitations:** this is an experimental prerelease with no complete live ChatGPT integration test; it uses undocumented internal endpoints; it does not download attachment binaries, project instructions or account memory. It does not import conversations into a new ChatGPT account, guarantee scheduling while the browser is closed, or encrypt archives. The current ZIP output is limited to 80 MiB; remote fetching is not yet incremental.
 
-[**Latest release**](https://github.com/davins526/chatvault/releases/tag/v0.1.1) · [Privacy](PRIVACY.md) · [MIT License](LICENSE)
+[**Latest release**](https://github.com/davins526/chatvault/releases/tag/v0.1.2) · [Privacy](PRIVACY.md) · [MIT License](LICENSE)

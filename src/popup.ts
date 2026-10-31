@@ -3,12 +3,14 @@ const time=(value:number|null|undefined)=>value?new Date(value).toLocaleString('
 const date=(value:string|null|undefined)=>value?new Date(value).toLocaleString('ru-RU'):'нет';
 const message=async(type:string,args:any={})=>chrome.runtime.sendMessage({type,...args});
 function text(id:string,value:string){$(id).textContent=value;}
+function applyTheme(theme:'dark'|'light'){document.documentElement.dataset.theme=theme;($('themeDark') as HTMLInputElement).checked=theme==='dark';($('themeLight') as HTMLInputElement).checked=theme==='light';}
 async function refresh():Promise<void>{
   try {
     const res=await message('CV_GET_STATUS');if(!res?.ok)throw Error(res?.error||'Не удалось получить состояние');
     const {settings,state,snapshot,logs,snapshotCount}=res;
     (document.getElementById('enabled') as HTMLInputElement).checked=settings.enabled;
     (document.getElementById('autoDownload') as HTMLInputElement).checked=settings.autoDownload;
+    applyTheme(settings.theme==='light'?'light':'dark');
     const startDateInput = document.getElementById('startDate') as HTMLInputElement;
     if (document.activeElement !== startDateInput) startDateInput.value = settings.startDate || '';
     text('scheduleInfo',settings.startDate ? 'Каждые 7 дней от выбранной даты, в 20:00' : 'По умолчанию: воскресенье, 20:00');
@@ -29,11 +31,14 @@ async function updateOptions(){
   const enabled=(document.getElementById('enabled') as HTMLInputElement).checked;
   const autoDownload=(document.getElementById('autoDownload') as HTMLInputElement).checked;
   const startDate=(document.getElementById('startDate') as HTMLInputElement).value || null;
-  const response=await message('CV_SAVE_SETTINGS',{settings:{enabled,autoDownload,startDate}});
+  const theme=($('themeLight') as HTMLInputElement).checked?'light':'dark';
+  const response=await message('CV_SAVE_SETTINGS',{settings:{enabled,autoDownload,startDate,theme}});
   if(!response?.ok)text('notice',response?.error||'Ошибка сохранения');await refresh();
 }
 $('enabled').addEventListener('change',()=>void updateOptions());
 $('autoDownload').addEventListener('change',()=>void updateOptions());
+$('themeDark').addEventListener('change',()=>{applyTheme('dark');void updateOptions();});
+$('themeLight').addEventListener('change',()=>{applyTheme('light');void updateOptions();});
 const startDateInput=document.getElementById('startDate') as HTMLInputElement;
 const current=new Date();
 startDateInput.min=[current.getFullYear(),String(current.getMonth()+1).padStart(2,'0'),String(current.getDate()).padStart(2,'0')].join('-');

@@ -1,3 +1,4 @@
+export type ThemeMode = 'dark' | 'light';
 export type Settings = {
   enabled: boolean;
   dayOfWeek: number; // 0 = Sunday; fallback when startDate is empty
@@ -5,8 +6,9 @@ export type Settings = {
   minute: number;
   autoDownload: boolean;
   startDate?: string | null; // YYYY-MM-DD in device's local timezone
+  theme: ThemeMode;
 };
-export const DEFAULT_SETTINGS: Settings = {enabled: true, dayOfWeek: 0, hour: 20, minute: 0, autoDownload: true, startDate: null};
+export const DEFAULT_SETTINGS: Settings = {enabled: true, dayOfWeek: 0, hour: 20, minute: 0, autoDownload: true, startDate: null, theme: 'dark'};
 
 export type RunStatus = 'running' | 'complete' | 'partial' | 'failed';
 export type ChatRecord = {id: string; title: string; projectId: string|null; updatedAt: string|null; hash: string; lastSeenAt: string};

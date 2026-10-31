@@ -1,9 +1,10 @@
-# ChatVault v0.1.1 — experimental hotfix
+# ChatVault v0.1.2 — Monochrome UI and connection fix
 
-- Windows installer now always installs per-user to `%LOCALAPPDATA%\\ChatVault` and no longer offers a Program Files destination.
-- Popup calendar chooses the **first backup date**, at 20:00 local time; all later backups repeat every 7 calendar days.
-- Leaving the date empty preserves the default schedule: Sunday at 20:00.
-- Added tests for user-selected dates and weekly recurrence across dates.
-- Previous experimental backup functionality remains unchanged.
+- Новый чёрно-белый интерфейс в стиле минимализма, тёмная и светлая тема.
+- Переключатель темы сохраняется в настройках расширения.
+- Новый лаконичный значок архива в шапке.
+- Устранена частая ошибка "Could not establish connection. Receiving end does not exist": перед сбором проверяется получатель и при необходимости подключается content script.
+- Ошибка соединения больше не запускает часовой запрет ручной попытки; ограничение 429 по-прежнему соблюдается.
+- Сохранён календарь первой даты недельного бэкапа, добавленный в v0.1.1.
 
-**Known limitations:** outside-store browser activation still requires manual confirmation, ChatGPT collection is not integration-tested; attachments and project instructions are not downloaded, local ZIP is unencrypted, and browser shutdown may delay scheduled backups.
+**Важно:** внутренние API ChatGPT недокументированы; полноценный тест экспорта на авторизованном аккаунте не выполнен. Бэкап файлов вложений, памяти и инструкций проектов отсутствует. Вне магазина установка требует ручного подтверждения браузером.

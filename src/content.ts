@@ -49,6 +49,7 @@ async function collect(runId:string):Promise<void> {
   } finally {collecting=false;}
 }
 chrome.runtime.onMessage.addListener((m:any,_sender:any,respond:(v:any)=>void)=>{
+  if(m?.type==='CV_PING'){respond({ok:true,ready:true,collecting});return;}
   if(m?.type==='CV_COLLECT') {
     if(collecting){respond({ok:false,error:'Эта вкладка уже выполняет сбор'});return;}
     respond({ok:true});

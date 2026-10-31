@@ -1,4 +1,4 @@
-ChatVault v0.1.1 — инструкция для Brave / Chrome
+ChatVault v0.1.2 — инструкция для Brave / Chrome
 
 Установщик скопировал расширение в постоянную папку:
 %LOCALAPPDATA%\ChatVault\Extension

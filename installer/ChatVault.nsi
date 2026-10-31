@@ -1,22 +1,22 @@
-; ChatVault Setup v0.1.1. Browser confirmation is mandatory.
+; ChatVault Setup v0.1.2. Browser confirmation is mandatory.
 Unicode true
 !include "MUI2.nsh"
 !ifndef REPO_ROOT
  !define REPO_ROOT ".."
 !endif
 !ifndef OUTPUT_FILE
- !define OUTPUT_FILE "ChatVault-Setup-v0.1.1.exe"
+ !define OUTPUT_FILE "ChatVault-Setup-v0.1.2.exe"
 !endif
-Name "ChatVault v0.1.1"
+Name "ChatVault v0.1.2"
 OutFile "${OUTPUT_FILE}"
 InstallDir "$LOCALAPPDATA\ChatVault"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 ShowInstDetails show
-VIProductVersion "0.1.1.0"
+VIProductVersion "0.1.2.0"
 VIAddVersionKey "ProductName" "ChatVault"
 VIAddVersionKey "FileDescription" "ChatVault Windows setup assistant"
-VIAddVersionKey "FileVersion" "0.1.1"
+VIAddVersionKey "FileVersion" "0.1.2"
 VIAddVersionKey "LegalCopyright" "Copyright (c) 2026 Daniil Goncharov"
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\INSTALL_IN_BRAVE.txt"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Открыть инструкцию для Brave / Chrome"
@@ -42,8 +42,8 @@ Section "ChatVault extension files" SecMain
  CreateShortCut "$SMPROGRAMS\ChatVault\Папка расширения.lnk" "$WINDIR\explorer.exe" '"$INSTDIR\Extension"'
  CreateShortCut "$SMPROGRAMS\ChatVault\Инструкция.lnk" "$INSTDIR\INSTALL_IN_BRAVE.txt"
  CreateShortCut "$SMPROGRAMS\ChatVault\Удаление.lnk" "$INSTDIR\Uninstall.exe"
- WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "DisplayName" "ChatVault v0.1.1"
- WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "DisplayVersion" "0.1.1"
+ WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "DisplayName" "ChatVault v0.1.2"
+ WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "DisplayVersion" "0.1.2"
  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "Publisher" "Daniil Goncharov"
  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "InstallLocation" "$INSTDIR"
  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChatVault" "UninstallString" '"$INSTDIR\Uninstall.exe"'

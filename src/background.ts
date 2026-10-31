@@ -39,6 +39,12 @@ async function findTab():Promise<any|null>{
   const tabs=await chrome.tabs.query({url:['https://chatgpt.com/*','https://chat.openai.com/*']});
   return tabs.find((t:any)=>t.status==='complete' && typeof t.id==='number')||null;
 }
+async function ensureCollector(tabId:number):Promise<void>{
+  try {const reply=await chrome.tabs.sendMessage(tabId,{type:'CV_PING'});if(reply?.ok)return;} catch {}
+  await chrome.scripting.executeScript({target:{tabId},files:['content.js']});
+  const check=await chrome.tabs.sendMessage(tabId,{type:'CV_PING'});
+  if(!check?.ok)throw Error('Сборщик недоступен после подключения к вкладке');
+}
 async function checkDue():Promise<void>{
   const cfg=await getSettings(), s=await getState();
   if(s.activeRunId)return;
@@ -54,6 +60,8 @@ async function runBackup(manual:boolean):Promise<{ok:boolean,message:string}>{
     if(old.backoffUntil&&Date.now()<old.backoffUntil)return {ok:false,message:'После ошибки сервер ограничил запросы. Повторите позже.'};
     const tab=await findTab();
     if(!tab){await updateState({pendingManual:manual||old.pendingManual,status:'waiting-tab',notice:'Откройте ChatGPT в этом профиле Brave: копия запустится при доступной вкладке.'});return {ok:false,message:'Нет открытой авторизованной вкладки ChatGPT'};}
+    try {await ensureCollector(tab.id);}
+    catch(e){await updateState({status:'failed',notice:'Нет соединения с вкладкой ChatGPT. Обновите вкладку и повторите.',pendingManual:false});await addLog('error',String(e));return {ok:false,message:'Не удалось подключить сборщик. Обновите вкладку ChatGPT и повторите.'};}
     const runId=crypto.randomUUID();await startSnapshot(runId);
     runTabId=tab.id;
     await updateState({activeRunId:runId,pendingManual:false,lastAttemptAt:Date.now(),status:'running',notice:manual?'Ручное копирование…':'Недельное копирование…',current:0,discovered:null});
@@ -76,10 +84,11 @@ async function finish(runId:string,discovered:number|null,errors:string[]):Promi
   const complete=snapshot.status==='complete' && snapshot.entries.length>0;
   if(!complete){
     const retryMatch=errors.join(' ').match(/Retry-After:\s*(\d+)/i);
-    const cooldown=Math.max(60*60*1000,retryMatch?Number(retryMatch[1])*1000:0);
-    const backoff=Date.now()+Math.min(cooldown,24*60*60*1000);
+    const limited=errors.some(e=>/\b429\b|лимит запросов/i.test(e));
+    const cooldown=limited?Math.max(60*60*1000,retryMatch?Number(retryMatch[1])*1000:0):0;
+    const backoff=limited?Date.now()+Math.min(cooldown,24*60*60*1000):null;
     await updateState({activeRunId:null,status:snapshot.entries.length?'partial':'failed',pendingManual:false,notice:`Копия неполная: ${errors[0]||'неизвестная ошибка'}`,backoffUntil:backoff,current:snapshot.entries.length,discovered});
-    await chrome.alarms.create(RETRY,{when:backoff+60000});
+    if(backoff)await chrome.alarms.create(RETRY,{when:backoff+60000});
     await addLog('error',errors.join('; ')||'Неполная копия');
   } else {
     const next=nextWeekly(new Date(),cfg);
@@ -129,7 +138,8 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
       const previous=await getSettings();
       const next:Settings={
         ...DEFAULT_SETTINGS, enabled:!!m.settings?.enabled, autoDownload:!!m.settings?.autoDownload,
-        startDate: typeof m.settings?.startDate==='string' && m.settings.startDate ? m.settings.startDate : null
+        startDate: typeof m.settings?.startDate==='string' && m.settings.startDate ? m.settings.startDate : null,
+        theme: m.settings?.theme==='light'?'light':'dark'
       };
       const now=new Date();
       // Validate before updating persistent settings.

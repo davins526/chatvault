@@ -1,6 +1,47 @@
 <!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ChatVault</title><style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;width:370px;background:#0e131a;color:#eaf1f8;font:13px/1.5 system-ui,Arial,sans-serif}.wrap{padding:19px}header{display:flex;align-items:center;gap:11px;margin-bottom:19px}.logo{width:39px;height:39px;display:grid;place-items:center;background:linear-gradient(135deg,#34cdb4,#2387aa);font-weight:850;font-size:21px;color:#071319;border-radius:11px}h1{font-size:19px;margin:0;line-height:1.2}small,.muted{color:#a5b3c2}h2{font-size:13px;color:#ebf4fc;margin:0 0 9px}.sub{color:#9cacbc;font-size:11px}.panel{border:1px solid #293341;border-radius:12px;padding:13px;margin-bottom:11px;background:#141c26}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pill{border-radius:99px;padding:4px 9px;font-size:11px;background:#223341;color:#aac6d7}.pill.ok{color:#82e7c6;background:#12362f}.pill.bad{background:#40242b;color:#ffb2c1}.num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0}.stat{border:1px solid #2b3645;border-radius:10px;text-align:center;padding:8px 4px}.stat div:last-child{font-size:11px;color:#a4b3c2}button{width:100%;padding:10px 12px;border-radius:9px;border:1px solid #32495a;background:#243543;color:#e8f3f9;font-size:13px;font-weight:600;cursor:pointer}button.main{background:#26b59c;color:#052821;border-color:#26b59c;margin-bottom:8px}button:disabled{opacity:.45;cursor:default}.toggle{display:flex;align-items:center;justify-content:space-between;margin:8px 0}.toggle input{accent-color:#23c39e;width:18px;height:18px}.date-picker{width:100%;margin:8px 0 3px;border:1px solid #32495a;border-radius:8px;padding:8px 10px;background:#1c2935;color:#edf6fc;font:inherit;color-scheme:dark}.date-picker:focus{outline:2px solid #26b59c}#notice{white-space:pre-wrap;color:#b7c6d4;word-break:break-word;margin-top:10px}#logs{max-height:140px;overflow:auto;font-size:11px;color:#abbac7}#logs div{padding:5px 0;border-top:1px solid #26313c}footer{font-size:11px;color:#92a7b4;line-height:1.5}</style></head><body><div class="wrap">
-<header><div class="logo">C</div><div><h1>ChatVault</h1><small>Локальные копии ChatGPT · v0.1</small></div></header>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;width:370px;background:#0e131a;color:#eaf1f8;font:13px/1.5 system-ui,Arial,sans-serif}.wrap{padding:19px}header{display:flex;align-items:center;gap:11px;margin-bottom:19px}.logo{width:39px;height:39px;display:grid;place-items:center;background:linear-gradient(135deg,#34cdb4,#2387aa);font-weight:850;font-size:21px;color:#071319;border-radius:11px}h1{font-size:19px;margin:0;line-height:1.2}small,.muted{color:#a5b3c2}h2{font-size:13px;color:#ebf4fc;margin:0 0 9px}.sub{color:#9cacbc;font-size:11px}.panel{border:1px solid #293341;border-radius:12px;padding:13px;margin-bottom:11px;background:#141c26}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pill{border-radius:99px;padding:4px 9px;font-size:11px;background:#223341;color:#aac6d7}.pill.ok{color:#82e7c6;background:#12362f}.pill.bad{background:#40242b;color:#ffb2c1}.num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0}.stat{border:1px solid #2b3645;border-radius:10px;text-align:center;padding:8px 4px}.stat div:last-child{font-size:11px;color:#a4b3c2}button{width:100%;padding:10px 12px;border-radius:9px;border:1px solid #32495a;background:#243543;color:#e8f3f9;font-size:13px;font-weight:600;cursor:pointer}button.main{background:#26b59c;color:#052821;border-color:#26b59c;margin-bottom:8px}button:disabled{opacity:.45;cursor:default}.toggle{display:flex;align-items:center;justify-content:space-between;margin:8px 0}.toggle input{accent-color:#23c39e;width:18px;height:18px}.date-picker{width:100%;margin:8px 0 3px;border:1px solid #32495a;border-radius:8px;padding:8px 10px;background:#1c2935;color:#edf6fc;font:inherit;color-scheme:dark}.date-picker:focus{outline:2px solid #26b59c}#notice{white-space:pre-wrap;color:#b7c6d4;word-break:break-word;margin-top:10px}#logs{max-height:140px;overflow:auto;font-size:11px;color:#abbac7}#logs div{padding:5px 0;border-top:1px solid #26313c}footer{font-size:11px;color:#92a7b4;line-height:1.5}
+:root{
+  --bg:#0b0b0b;--panel:#171717;--panel2:#202020;--border:#303030;
+  --fg:#f7f7f7;--sub:#a6a6a6;--soft:#d1d1d1;--button:#f7f7f7;--buttonText:#111;
+  --shadow:0 10px 30px rgba(0,0,0,.18);color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#f7f7f7;--panel:#fff;--panel2:#f2f2f2;--border:#e2e2e2;
+  --fg:#111;--sub:#626262;--soft:#414141;--button:#111;--buttonText:#fff;
+  --shadow:0 6px 18px rgba(0,0,0,.05);color-scheme:light;
+}
+body{width:380px;background:var(--bg);color:var(--fg);font:13px/1.5 system-ui,Arial,sans-serif}
+.wrap{padding:18px}
+header{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:16px}
+.brand{display:flex;gap:10px;align-items:center;min-width:0}
+.logo{width:42px;height:42px;flex:0 0 42px;background:var(--panel2);color:var(--fg);border:1px solid var(--border);border-radius:12px;display:grid;place-items:center}
+.logo svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+h1{font-size:19px;color:var(--fg);letter-spacing:-.4px}
+header small{font-size:10px;white-space:nowrap;color:var(--sub)}
+h2{color:var(--fg)}
+.panel{border:1px solid var(--border);background:var(--panel);border-radius:15px;padding:14px;box-shadow:var(--shadow)}
+.sub,small,.muted,footer{color:var(--sub)}
+#notice{color:var(--soft)}
+.stat{border-color:var(--border);background:var(--panel2);border-radius:11px;padding:10px 4px}
+.stat div:last-child{color:var(--sub)}
+.pill{background:var(--panel2);color:var(--fg);border:1px solid var(--border)}
+.pill.ok{background:var(--button);color:var(--buttonText)}
+.pill.bad{background:var(--panel2);color:var(--fg)}
+button{border:1px solid var(--border);background:var(--panel2);color:var(--fg);border-radius:11px}
+button.main{background:var(--button);color:var(--buttonText);border-color:var(--button)}
+.toggle input{accent-color:var(--fg)}
+.date-picker{background:var(--panel2);color:var(--fg);border:1px solid var(--border);border-radius:10px;color-scheme:inherit}
+.date-picker:focus{outline:1px solid var(--sub)}
+#logs{color:var(--soft)}
+#logs div{border-top-color:var(--border)}
+.theme-toggle{display:flex;align-items:center;border:1px solid var(--border);border-radius:99px;padding:3px;gap:3px;background:var(--panel)}
+.theme-toggle label{position:relative;cursor:pointer}
+.theme-toggle input{position:absolute;width:1px;height:1px;opacity:0}
+.theme-toggle span{display:flex;align-items:center;justify-content:center;width:29px;height:27px;border-radius:99px;color:var(--sub);font-size:16px}
+.theme-toggle input:checked+span{color:var(--buttonText);background:var(--button)}
+.theme-toggle input:focus-visible+span{outline:2px solid var(--sub)}
+</style></head><body><div class="wrap">
+<header><div class="brand"><div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 5.5h18v3H3z"/><path d="M10 13.5h4"/></svg></div><div><h1>ChatVault</h1><small>Локальные копии ChatGPT · v0.1.2</small></div></div><div class="theme-toggle" role="group" aria-label="Цветовая тема"><label title="Тёмная"><input type="radio" name="theme" id="themeDark" checked><span>☾</span></label><label title="Светлая"><input type="radio" name="theme" id="themeLight"><span>☀</span></label></div></header>
 <section class="panel"><div class="row"><h2>Статус резервирования</h2><span id="badge" class="pill">Загрузка</span></div><div id="notice">Проверка хранилища…</div><div class="stats"><div class="stat"><div class="num" id="count">—</div><div>Чатов</div></div><div class="stat"><div class="num" id="versions">—</div><div>Снимков</div></div><div class="stat"><div class="num" id="changes">—</div><div>Изменено</div></div></div><div class="sub">Последняя полная копия: <b id="last">нет</b></div></section>
 <section class="panel"><h2>Расписание</h2><label class="toggle">Копировать автоматически <input id="enabled" type="checkbox" checked></label><label for="startDate" class="sub">Дата первого резервирования (необязательно)</label><input class="date-picker" id="startDate" type="date" aria-label="Дата первого резервирования"><div class="sub" id="scheduleInfo">По умолчанию: воскресенье, 20:00</div><label class="toggle">Скачивать ZIP после копии <input id="autoDownload" type="checkbox" checked></label><div class="sub">Время устройства. Нужны открытый Brave и вкладка ChatGPT с действующей сессией.</div><div class="sub" style="margin-top:8px">Следующая попытка: <b id="next">—</b></div></section>
 <button class="main" id="backup">Сделать копию сейчас</button><button id="download">Скачать последний ZIP</button>

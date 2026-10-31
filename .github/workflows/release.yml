@@ -1,4 +1,4 @@
-name: Release v0.1.1
+name: Release v0.1.2
 on:
   push:
     branches: [main]
@@ -23,16 +23,16 @@ jobs:
       - name: Package extension and sources
         run: |
           cd dist
-          zip -q -r ../ChatVault-v0.1.1-extension.zip .
+          zip -q -r ../ChatVault-v0.1.2-extension.zip .
           cd ..
-          git archive --format=zip --prefix=chatvault-v0.1.1/ --output=ChatVault-v0.1.1-source.zip HEAD
-          sha256sum ChatVault-v0.1.1-extension.zip ChatVault-v0.1.1-source.zip > SHA256SUMS.txt
+          git archive --format=zip --prefix=chatvault-v0.1.2/ --output=ChatVault-v0.1.2-source.zip HEAD
+          sha256sum ChatVault-v0.1.2-extension.zip ChatVault-v0.1.2-source.zip > SHA256SUMS.txt
       - name: Publish prerelease
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v0.1.1 >/dev/null 2>&1; then
-            echo 'Release v0.1.1 already exists'
+          if gh release view v0.1.2 >/dev/null 2>&1; then
+            echo 'Release v0.1.2 already exists'
             exit 0
           fi
-          gh release create v0.1.1 ChatVault-v0.1.1-extension.zip ChatVault-v0.1.1-source.zip SHA256SUMS.txt --title 'ChatVault v0.1.1 — experimental' --notes-file RELEASE_NOTES.md --target "$GITHUB_SHA" --prerelease
+          gh release create v0.1.2 ChatVault-v0.1.2-extension.zip ChatVault-v0.1.2-source.zip SHA256SUMS.txt --title 'ChatVault v0.1.2 — experimental' --notes-file RELEASE_NOTES.md --target "$GITHUB_SHA" --prerelease
