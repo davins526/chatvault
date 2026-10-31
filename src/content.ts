@@ -16,7 +16,7 @@ async function session():Promise<string>{
  if(!r.ok)fail(r,'auth');
  const data=await r.json();
  if(typeof data?.accessToken!=='string'||!data.accessToken)throw error('auth','В сессии нет токена');
- token=data.accessToken;return token;
+ token=data.accessToken;return data.accessToken;
 }
 async function api(path:string,stage:string):Promise<any>{
  let t=await session();
