@@ -1,11 +1,9 @@
-# ChatVault v0.1.0 — experimental MVP
+# ChatVault v0.1.1 — experimental hotfix
 
-- Weekly local backup: Sunday 20:00, enabled by default
-- Best-effort catch-up when browser/ChatGPT tab next becomes available
-- Content collector on an existing logged-in ChatGPT tab
-- Full accessible raw conversation graphs as immutable SHA-256 revisions in IndexedDB
-- Snapshot manifests with error coverage, basic popup controls and local activity log
-- ZIP download on success (plus manual download of previous/partial snapshot)
-- No API rate-limit circumvention, no off-device telemetry
+- Windows installer now always installs per-user to `%LOCALAPPDATA%\\ChatVault` and no longer offers a Program Files destination.
+- Popup calendar chooses the **first backup date**, at 20:00 local time; all later backups repeat every 7 calendar days.
+- Leaving the date empty preserves the default schedule: Sunday at 20:00.
+- Added tests for user-selected dates and weekly recurrence across dates.
+- Previous experimental backup functionality remains unchanged.
 
-**Known limits:** attachments only as metadata; project instructions and account memory excluded; no account clone/import; not guaranteed under browser shutdown or changed ChatGPT APIs; local archives are unencrypted. Test in a non-sensitive browser profile before relying on it.
+**Known limitations:** outside-store browser activation still requires manual confirmation, ChatGPT collection is not integration-tested; attachments and project instructions are not downloaded, local ZIP is unencrypted, and browser shutdown may delay scheduled backups.

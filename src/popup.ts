@@ -9,6 +9,9 @@ async function refresh():Promise<void>{
     const {settings,state,snapshot,logs,snapshotCount}=res;
     (document.getElementById('enabled') as HTMLInputElement).checked=settings.enabled;
     (document.getElementById('autoDownload') as HTMLInputElement).checked=settings.autoDownload;
+    const startDateInput = document.getElementById('startDate') as HTMLInputElement;
+    if (document.activeElement !== startDateInput) startDateInput.value = settings.startDate || '';
+    text('scheduleInfo',settings.startDate ? 'Каждые 7 дней от выбранной даты, в 20:00' : 'По умолчанию: воскресенье, 20:00');
     text('notice',state.notice||'Ожидание');
     text('count',String(snapshot?.entries?.length||0));
     text('versions',String(snapshotCount||0));
@@ -25,11 +28,16 @@ async function refresh():Promise<void>{
 async function updateOptions(){
   const enabled=(document.getElementById('enabled') as HTMLInputElement).checked;
   const autoDownload=(document.getElementById('autoDownload') as HTMLInputElement).checked;
-  const response=await message('CV_SAVE_SETTINGS',{settings:{enabled,autoDownload,dayOfWeek:0,hour:20,minute:0}});
+  const startDate=(document.getElementById('startDate') as HTMLInputElement).value || null;
+  const response=await message('CV_SAVE_SETTINGS',{settings:{enabled,autoDownload,startDate}});
   if(!response?.ok)text('notice',response?.error||'Ошибка сохранения');await refresh();
 }
 $('enabled').addEventListener('change',()=>void updateOptions());
 $('autoDownload').addEventListener('change',()=>void updateOptions());
+const startDateInput=document.getElementById('startDate') as HTMLInputElement;
+const current=new Date();
+startDateInput.min=[current.getFullYear(),String(current.getMonth()+1).padStart(2,'0'),String(current.getDate()).padStart(2,'0')].join('-');
+startDateInput.addEventListener('change',()=>void updateOptions());
 $('backup').addEventListener('click',()=>void(async()=>{($('backup') as HTMLButtonElement).disabled=true;const r=await message('CV_BACKUP_NOW');text('notice',r.message||r.error||'Запрос отправлен');await refresh();})());
 $('download').addEventListener('click',()=>void(async()=>{const r=await message('CV_EXPORT');text('notice',r?.ok?'ZIP передан браузеру для скачивания':r?.error||'Ошибка скачивания');})());
 void refresh();setInterval(()=>void refresh(),4000);

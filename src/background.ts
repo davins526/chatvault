@@ -126,9 +126,21 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
   }
   if(m?.type==='CV_SAVE_SETTINGS'){
     void(async()=>{
-      const settings:{[key:string]:unknown}={...DEFAULT_SETTINGS,...m.settings};
-      if(settings.dayOfWeek!==0||settings.hour!==20||settings.minute!==0)throw Error('В этой версии фиксировано: воскресенье, 20:00');
-      await chrome.storage.local.set({settings});await updateState({nextDueAt:nextWeekly(new Date(),settings as Settings)});await reschedule();send({ok:true});
+      const previous=await getSettings();
+      const next:Settings={
+        ...DEFAULT_SETTINGS, enabled:!!m.settings?.enabled, autoDownload:!!m.settings?.autoDownload,
+        startDate: typeof m.settings?.startDate==='string' && m.settings.startDate ? m.settings.startDate : null
+      };
+      const now=new Date();
+      // Validate before updating persistent settings.
+      const newDue=nextWeekly(now,next);
+      const changed=(previous.startDate||null)!==(next.startDate||null) || (!previous.enabled && next.enabled);
+      const current=await getState();
+      if(current.activeRunId)throw Error('Нельзя менять расписание во время копирования');
+      await chrome.storage.local.set({settings:next});
+      if(changed)await updateState({nextDueAt:newDue});
+      await reschedule();
+      send({ok:true});
     })().catch((e)=>send({ok:false,error:String(e)}));return true;
   }
   if(m?.type==='CV_BACKUP_NOW'){

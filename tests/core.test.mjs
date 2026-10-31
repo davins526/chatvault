@@ -16,3 +16,22 @@ test('ZIP signature and entries',async()=>{
  const a=new Uint8Array(await b.arrayBuffer());assert.equal(a[0],0x50);assert.equal(a[1],0x4b);assert.equal(a[2],3);assert.equal(a[3],4);
  assert.equal(new DataView(a.buffer).getUint32(a.length-22,true),0x06054b50);
 });
+
+test('Custom first backup date picks the selected date at 20:00',()=>{
+ const cfg={...DEFAULT_SETTINGS,startDate:'2026-11-05'};
+ const next=new Date(nextWeekly(new Date(2026,10,1,12,0),cfg));
+ assert.equal(next.getDate(),5);assert.equal(next.getDay(),4);assert.equal(next.getHours(),20);
+});
+test('Custom date keeps a weekly schedule after first backup',()=>{
+ const cfg={...DEFAULT_SETTINGS,startDate:'2026-11-05'};
+ const next=new Date(nextWeekly(new Date(2026,10,6,21,0),cfg));
+ assert.equal(next.getDate(),12);assert.equal(next.getHours(),20);
+});
+test('Selected date at 20:00 schedules following week',()=>{
+ const cfg={...DEFAULT_SETTINGS,startDate:'2026-11-05'};
+ const next=new Date(nextWeekly(new Date(2026,10,5,20,0),cfg));
+ assert.equal(next.getDate(),12);
+});
+test('Invalid calendar date is rejected',()=>{
+ assert.throws(()=>nextWeekly(new Date(),{...DEFAULT_SETTINGS,startDate:'2026-02-30'}),/Некорректная дата/);
+});
