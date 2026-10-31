@@ -1,50 +1,131 @@
-<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ChatVault</title><style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;width:370px;background:#0e131a;color:#eaf1f8;font:13px/1.5 system-ui,Arial,sans-serif}.wrap{padding:19px}header{display:flex;align-items:center;gap:11px;margin-bottom:19px}.logo{width:39px;height:39px;display:grid;place-items:center;background:linear-gradient(135deg,#34cdb4,#2387aa);font-weight:850;font-size:21px;color:#071319;border-radius:11px}h1{font-size:19px;margin:0;line-height:1.2}small,.muted{color:#a5b3c2}h2{font-size:13px;color:#ebf4fc;margin:0 0 9px}.sub{color:#9cacbc;font-size:11px}.panel{border:1px solid #293341;border-radius:12px;padding:13px;margin-bottom:11px;background:#141c26}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.pill{border-radius:99px;padding:4px 9px;font-size:11px;background:#223341;color:#aac6d7}.pill.ok{color:#82e7c6;background:#12362f}.pill.bad{background:#40242b;color:#ffb2c1}.num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0}.stat{border:1px solid #2b3645;border-radius:10px;text-align:center;padding:8px 4px}.stat div:last-child{font-size:11px;color:#a4b3c2}button{width:100%;padding:10px 12px;border-radius:9px;border:1px solid #32495a;background:#243543;color:#e8f3f9;font-size:13px;font-weight:600;cursor:pointer}button.main{background:#26b59c;color:#052821;border-color:#26b59c;margin-bottom:8px}button:disabled{opacity:.45;cursor:default}.toggle{display:flex;align-items:center;justify-content:space-between;margin:8px 0}.toggle input{accent-color:#23c39e;width:18px;height:18px}.date-picker{width:100%;margin:8px 0 3px;border:1px solid #32495a;border-radius:8px;padding:8px 10px;background:#1c2935;color:#edf6fc;font:inherit;color-scheme:dark}.date-picker:focus{outline:2px solid #26b59c}#notice{white-space:pre-wrap;color:#b7c6d4;word-break:break-word;margin-top:10px}#logs{max-height:140px;overflow:auto;font-size:11px;color:#abbac7}#logs div{padding:5px 0;border-top:1px solid #26313c}footer{font-size:11px;color:#92a7b4;line-height:1.5}
-:root{
-  --bg:#0b0b0b;--panel:#171717;--panel2:#202020;--border:#303030;
-  --fg:#f7f7f7;--sub:#a6a6a6;--soft:#d1d1d1;--button:#f7f7f7;--buttonText:#111;
-  --shadow:0 10px 30px rgba(0,0,0,.18);color-scheme:dark;
-}
-:root[data-theme="light"]{
-  --bg:#f7f7f7;--panel:#fff;--panel2:#f2f2f2;--border:#e2e2e2;
-  --fg:#111;--sub:#626262;--soft:#414141;--button:#111;--buttonText:#fff;
-  --shadow:0 6px 18px rgba(0,0,0,.05);color-scheme:light;
-}
-body{width:380px;background:var(--bg);color:var(--fg);font:13px/1.5 system-ui,Arial,sans-serif}
-.wrap{padding:18px}
-header{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:16px}
-.brand{display:flex;gap:10px;align-items:center;min-width:0}
-.logo{width:42px;height:42px;flex:0 0 42px;background:var(--panel2);color:var(--fg);border:1px solid var(--border);border-radius:12px;display:grid;place-items:center}
-.logo svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
-h1{font-size:19px;color:var(--fg);letter-spacing:-.4px}
-header small{font-size:10px;white-space:nowrap;color:var(--sub)}
-h2{color:var(--fg)}
-.panel{border:1px solid var(--border);background:var(--panel);border-radius:15px;padding:14px;box-shadow:var(--shadow)}
-.sub,small,.muted,footer{color:var(--sub)}
-#notice{color:var(--soft)}
-.stat{border-color:var(--border);background:var(--panel2);border-radius:11px;padding:10px 4px}
-.stat div:last-child{color:var(--sub)}
-.pill{background:var(--panel2);color:var(--fg);border:1px solid var(--border)}
-.pill.ok{background:var(--button);color:var(--buttonText)}
-.pill.bad{background:var(--panel2);color:var(--fg)}
-button{border:1px solid var(--border);background:var(--panel2);color:var(--fg);border-radius:11px}
-button.main{background:var(--button);color:var(--buttonText);border-color:var(--button)}
-.toggle input{accent-color:var(--fg)}
-.date-picker{background:var(--panel2);color:var(--fg);border:1px solid var(--border);border-radius:10px;color-scheme:inherit}
-.date-picker:focus{outline:1px solid var(--sub)}
-#logs{color:var(--soft)}
-#logs div{border-top-color:var(--border)} .diagnostic{margin-top:10px;display:grid;grid-template-columns:1fr;gap:8px}.diag-button{background:var(--panel2);color:var(--fg);border:1px solid var(--border);padding:9px;border-radius:10px;cursor:pointer}.diag-button:disabled{opacity:.5}.diag-status{color:var(--sub);font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}.diag-status.ok{color:var(--fg)}.diag-status.failed{color:var(--fg)}.diag-hint{font-size:11px;color:var(--sub);margin-top:7px}
-.theme-toggle{display:flex;align-items:center;border:1px solid var(--border);border-radius:99px;padding:3px;gap:3px;background:var(--panel)}
-.theme-toggle label{position:relative;cursor:pointer}
-.theme-toggle input{position:absolute;width:1px;height:1px;opacity:0}
-.theme-toggle span{display:flex;align-items:center;justify-content:center;width:29px;height:27px;border-radius:99px;color:var(--sub);font-size:16px}
-.theme-toggle input:checked+span{color:var(--buttonText);background:var(--button)}
-.theme-toggle input:focus-visible+span{outline:2px solid var(--sub)}
-</style></head><body><div class="wrap">
-<header><div class="brand"><div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 5.5h18v3H3z"/><path d="M10 13.5h4"/></svg></div><div><h1>ChatVault</h1><small>Локальные копии ChatGPT · v0.1.3</small></div></div><div class="theme-toggle" role="group" aria-label="Цветовая тема"><label title="Тёмная"><input type="radio" name="theme" id="themeDark" checked><span>☾</span></label><label title="Светлая"><input type="radio" name="theme" id="themeLight"><span>☀</span></label></div></header>
-<section class="panel"><div class="row"><h2>Статус резервирования</h2><span id="badge" class="pill">Загрузка</span></div><div id="notice">Проверка хранилища…</div><div class="stats"><div class="stat"><div class="num" id="count">—</div><div>Чатов</div></div><div class="stat"><div class="num" id="versions">—</div><div>Снимков</div></div><div class="stat"><div class="num" id="changes">—</div><div>Изменено</div></div></div><div class="sub">Последняя полная копия: <b id="last">нет</b></div><div class="diagnostic"><button type="button" class="diag-button" id="diagnose">Проверить подключение к ChatGPT</button><div id="diagnosticResult" class="diag-status" role="status" aria-live="polite">Диагностика не запускалась</div></div></section>
-<section class="panel"><h2>Расписание</h2><label class="toggle">Копировать автоматически <input id="enabled" type="checkbox" checked></label><label for="startDate" class="sub">Дата первого резервирования (необязательно)</label><input class="date-picker" id="startDate" type="date" aria-label="Дата первого резервирования"><div class="sub" id="scheduleInfo">По умолчанию: воскресенье, 20:00</div><label class="toggle">Скачивать ZIP после копии <input id="autoDownload" type="checkbox" checked></label><div class="sub">Время устройства. Нужны открытый Brave и вкладка ChatGPT с действующей сессией.</div><div class="sub" style="margin-top:8px">Следующая попытка: <b id="next">—</b></div></section>
-<button class="main" id="backup">Сделать копию сейчас</button><button id="download">Скачать последний ZIP</button>
-<section class="panel" style="margin-top:12px"><h2>Журнал</h2><div id="logs">Нет событий</div><div class="diag-hint">Журнал сохраняет прошлые ошибки — запись не означает, что она повторилась после обновления.</div></section>
-<footer>Экспериментальный сбор через внутренний API ChatGPT. Вложения и инструкции проектов пока не сохраняются. Ошибка 429 останавливает сбор; старые копии остаются.</footer>
-</div><script type="module" src="popup.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ChatVault</title>
+<style>
+:root{color-scheme:dark;--bg:#101010;--surface:#1b1b1b;--surface2:#242424;--line:#333;--fg:#f5f5f5;--muted:#a4a4a4;--soft:#d0d0d0;--primary:#f5f5f5;--on-primary:#101010;--focus:#aaa}
+:root[data-theme="light"]{color-scheme:light;--bg:#f8f8f8;--surface:#fff;--surface2:#f0f0f0;--line:#dedede;--fg:#171717;--muted:#696969;--soft:#444;--primary:#171717;--on-primary:#fff;--focus:#666}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{width:354px;max-height:570px;overflow:auto;background:var(--bg);color:var(--fg);font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button:disabled{opacity:.44;cursor:default}
+button[hidden],.view[hidden]{display:none!important}
+.shell{padding:15px}
+.header{display:flex;align-items:center;gap:9px;padding-bottom:13px}
+.brandicon{width:36px;height:36px;display:grid;place-items:center;flex:none;border:1px solid var(--line);border-radius:11px;background:var(--surface)}
+.brandicon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.brandtext{min-width:0;flex:1}
+.brandtext strong{display:block;font-size:16px;line-height:1.15;letter-spacing:-.3px}
+.brandtext small{font-size:10px;color:var(--muted)}
+.nav{display:flex;gap:3px}
+.navbtn{width:32px;height:32px;border:1px solid transparent;border-radius:9px;display:grid;place-items:center;background:transparent;color:var(--muted)}
+.navbtn:hover,.navbtn[aria-pressed="true"]{color:var(--fg);background:var(--surface);border-color:var(--line)}
+.navbtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.view{display:grid;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.title{font-size:13px;font-weight:650;letter-spacing:-.15px;margin:0}
+.pill{font-size:10px;font-weight:600;white-space:nowrap;border:1px solid var(--line);background:var(--surface2);padding:4px 9px;border-radius:999px;color:var(--fg)}
+.pill.ok{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.pill.bad{background:var(--surface2);color:var(--fg)}
+.notice{color:var(--soft);font-size:12px;margin:9px 0 11px;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);padding-top:10px;gap:4px}
+.stat{display:grid;justify-items:center;gap:1px}
+.stat strong{font-size:20px;line-height:1.18;font-variant-numeric:tabular-nums;font-weight:650}
+.stat span{font-size:10px;color:var(--muted)}
+.metarow{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:10px;color:var(--muted)}
+.metarow b{font-weight:550;color:var(--fg);text-align:right}
+.primary,.secondary{width:100%;padding:10px 12px;border-radius:11px;border:1px solid var(--line);font-weight:630}
+.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.secondary{background:var(--surface);color:var(--fg)}
+.actions{display:grid;gap:7px}
+.linkline{display:flex;align-items:center;justify-content:space-between;gap:9px;color:var(--muted);font-size:11px;padding:0 1px}
+.textlink{border:none;background:transparent;color:var(--fg);font-weight:600;font-size:11px;padding:3px 0;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.view-heading{display:flex;justify-content:space-between;align-items:center}
+.label{font-size:12px;color:var(--fg)}
+.hint{font-size:11px;color:var(--muted);line-height:1.5;margin:6px 0 0}
+.option{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:7px 0;font-size:12px}
+.option input[type="checkbox"]{accent-color:var(--fg);width:17px;height:17px;margin:0}
+.fieldlabel{display:block;font-size:11px;color:var(--muted);margin:10px 0 5px}
+.datepicker{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;color:var(--fg);background:var(--surface2);color-scheme:inherit}
+.segment{display:flex;gap:4px;border:1px solid var(--line);padding:3px;border-radius:9px;background:var(--surface2)}
+.segment label{cursor:pointer;position:relative;flex:1}
+.segment input{position:absolute;opacity:0;width:1px;height:1px}
+.segment span{display:block;padding:6px;border-radius:7px;text-align:center;font-size:11px;color:var(--muted)}
+.segment input:checked+span{color:var(--on-primary);background:var(--primary);font-weight:600}
+.segment input:focus-visible+span{outline:2px solid var(--focus)}
+#settingsMessage,#diagnosticResult{font-size:11px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+#logs{max-height:260px;overflow:auto;display:grid}
+.log{padding:8px 0;border-bottom:1px solid var(--line);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.log:last-child{border-bottom:0}
+.logtime{color:var(--muted);font-size:10px}
+.loglevel{text-transform:uppercase;font-size:10px;font-weight:700;color:var(--muted)}
+.footnote{font-size:10px;color:var(--muted);line-height:1.45}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="header">
+ <div class="brandicon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 5.5h18v3H3z"/><path d="M10 13.5h4"/></svg></div>
+ <div class="brandtext"><strong>ChatVault</strong><small>Локальные копии · v0.1.4</small></div>
+ <nav class="nav" aria-label="Разделы">
+   <button class="navbtn" data-view="home" aria-label="Главная" title="Главная" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="m3 11 9-7 9 7v9H3z"/><path d="M9 20v-7h6v7"/></svg></button>
+   <button class="navbtn" data-view="journal" aria-label="Журнал" title="Журнал" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h1M3 12h1M3 18h1"/></svg></button>
+   <button class="navbtn" data-view="settings" aria-label="Настройки" title="Настройки" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1 2.2-2.3 2.3-2.2-.1-.9 1.8h-4.2L9 19.4l-2.2.1-2.3-2.3.1-2.2L2.8 14v-4l1.8-.9-.1-2.2 2.3-2.3L9 4.6l.9-1.8h4.2l.9 1.8 2.2-.1 2.3 2.3-.1 2.2 1.8.9v4z"/></svg></button>
+ </nav>
+</header>
+<main>
+ <section id="view-home" class="view">
+   <div class="card">
+     <div class="row"><h2 class="title">Резервное копирование</h2><span id="badge" class="pill">Загрузка</span></div>
+     <p id="notice" class="notice">Проверка состояния…</p>
+     <div class="stats" aria-label="Статистика">
+       <div class="stat"><strong id="count">—</strong><span>Чатов</span></div>
+       <div class="stat"><strong id="versions">—</strong><span>Снимков</span></div>
+       <div class="stat"><strong id="changes">—</strong><span>Изменено</span></div>
+     </div>
+     <div class="metarow"><span>Последняя копия</span><b id="last">Нет</b></div>
+     <div class="metarow"><span>Следующий запуск</span><b id="next">—</b></div>
+   </div>
+   <div class="actions">
+     <button id="backup" class="primary">Сделать копию сейчас</button>
+     <button id="download" class="secondary">Скачать последний ZIP</button>
+   </div>
+   <div class="linkline"><span id="connectionSummary">Связь не проверена</span><button id="showJournal" class="textlink">Журнал и диагностика</button></div>
+ </section>
+ <section id="view-journal" class="view" hidden>
+   <div class="view-heading"><h2 class="title">Журнал событий</h2><button class="textlink" data-back="home">На главную</button></div>
+   <div class="card"><div class="row"><h3 class="title">Подключение</h3><span id="diagnosticCode" class="pill">Не проверено</span></div><p id="diagnosticResult" class="hint">Диагностика не запускалась.</p><button id="diagnose" class="secondary" style="margin-top:10px">Проверить подключение</button></div>
+   <div class="card"><div class="row" style="margin-bottom:8px"><h3 class="title">Последние события</h3><span class="hint">До 12 записей</span></div><div id="logs">Нет событий</div></div>
+   <div class="footnote">Старые ошибки остаются в истории после обновления. Диагностика проверяет связь с вкладкой, а не полноту бэкапа.</div>
+ </section>
+ <section id="view-settings" class="view" hidden>
+   <div class="view-heading"><h2 class="title">Настройки</h2><button class="textlink" data-back="home">На главную</button></div>
+   <div class="card">
+     <h3 class="title">Резервирование</h3>
+     <label class="option">Автоматически каждую неделю <input id="enabled" type="checkbox"></label>
+     <label class="fieldlabel" for="startDate">Дата первого копирования</label>
+     <input id="startDate" class="datepicker" type="date">
+     <p id="scheduleInfo" class="hint">По умолчанию: воскресенье, 20:00</p>
+     <label class="option">Скачивать ZIP автоматически <input id="autoDownload" type="checkbox"></label>
+     <p class="hint">Для автоматического копирования нужен работающий браузер и открытая авторизованная вкладка ChatGPT.</p>
+   </div>
+   <div class="card">
+     <h3 class="title" style="margin-bottom:10px">Оформление</h3>
+     <div class="segment" role="group" aria-label="Цветовая тема">
+       <label><input id="themeDark" type="radio" name="theme" value="dark"><span>Тёмная</span></label>
+       <label><input id="themeLight" type="radio" name="theme" value="light"><span>Светлая</span></label>
+     </div>
+   </div>
+   <div id="settingsMessage" role="status" aria-live="polite"></div>
+   <div class="footnote">Экспериментальная версия: вложения, память и инструкции проектов пока не сохраняются. Ошибка 429 останавливает сетевой сбор.</div>
+ </section>
+</main>
+</div>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

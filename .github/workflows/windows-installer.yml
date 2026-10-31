@@ -42,21 +42,21 @@ jobs:
             "$env:ProgramFiles\NSIS\makensis.exe"
           ) | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $nsis) { throw 'NSIS not found' }
-          & $nsis "/DREPO_ROOT=$env:GITHUB_WORKSPACE" "/DOUTPUT_FILE=$env:GITHUB_WORKSPACE\ChatVault-Setup-v0.1.3.exe" 'installer\ChatVault.nsi'
+          & $nsis "/DREPO_ROOT=$env:GITHUB_WORKSPACE" "/DOUTPUT_FILE=$env:GITHUB_WORKSPACE\ChatVault-Setup-v0.1.4.exe" 'installer\ChatVault.nsi'
           if ($LASTEXITCODE -ne 0) { throw "NSIS failed: $LASTEXITCODE" }
-          if (-not (Test-Path 'ChatVault-Setup-v0.1.3.exe')) { throw 'Installer not generated' }
-          $file = Get-Item 'ChatVault-Setup-v0.1.3.exe'
+          if (-not (Test-Path 'ChatVault-Setup-v0.1.4.exe')) { throw 'Installer not generated' }
+          $file = Get-Item 'ChatVault-Setup-v0.1.4.exe'
           if ($file.Length -lt 10000) { throw 'Installer suspiciously small' }
           $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  $($file.Name)" | Set-Content -Path 'ChatVault-Setup-v0.1.3.exe.sha256' -Encoding ascii
+          "$hash  $($file.Name)" | Set-Content -Path 'ChatVault-Setup-v0.1.4.exe.sha256' -Encoding ascii
           Write-Host "Installer: $($file.Length) bytes, sha256 $hash"
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ChatVault-Windows-Setup-v0.1.3
+          name: ChatVault-Windows-Setup-v0.1.4
           path: |
-            ChatVault-Setup-v0.1.3.exe
-            ChatVault-Setup-v0.1.3.exe.sha256
+            ChatVault-Setup-v0.1.4.exe
+            ChatVault-Setup-v0.1.4.exe.sha256
       - name: Attach to GitHub prerelease
         shell: pwsh
         env:
@@ -64,10 +64,10 @@ jobs:
         run: |
           $exists = $false
           for ($attempt=1; $attempt -le 25; $attempt++) {
-            gh release view v0.1.3 *> $null
+            gh release view v0.1.4 *> $null
             if ($LASTEXITCODE -eq 0) { $exists = $true; break }
             Start-Sleep -Seconds 10
           }
-          if (-not $exists) { throw 'Release v0.1.3 did not appear' }
-          gh release upload v0.1.3 'ChatVault-Setup-v0.1.3.exe' 'ChatVault-Setup-v0.1.3.exe.sha256' --clobber
+          if (-not $exists) { throw 'Release v0.1.4 did not appear' }
+          gh release upload v0.1.4 'ChatVault-Setup-v0.1.4.exe' 'ChatVault-Setup-v0.1.4.exe.sha256' --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Unable to upload Windows installer' }
