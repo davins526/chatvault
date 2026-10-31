@@ -1,0 +1,28 @@
+ChatVault v0.1.0 — инструкция для Brave / Chrome
+
+Установщик скопировал расширение в постоянную папку:
+%LOCALAPPDATA%\ChatVault\Extension
+
+ВАЖНО: для обычных Brave/Chrome Windows не разрешает стороннему EXE
+включать расширение без согласия пользователя.
+
+BRAVE
+1. Откройте Brave и введите в адресной строке brave://extensions
+2. Включите «Режим разработчика».
+3. Нажмите «Загрузить распакованное расширение».
+4. Выберите папку %LOCALAPPDATA%\ChatVault\Extension
+5. Убедитесь, что в папке находится manifest.json.
+
+CHROME
+1. Откройте chrome://extensions
+2. Включите Developer mode → Load unpacked.
+3. Выберите %LOCALAPPDATA%\ChatVault\Extension
+
+ПРОВЕРКА
+Откройте https://chatgpt.com, нажмите ChatVault и протестируйте ручной бэкап.
+
+Безопасность: экспериментальная версия, IndexedDB и ZIP не шифруются.
+Автоматическое копирование требует работающего браузера и авторизованной сессии.
+Не удаляйте расширение до сохранения резервных копий в ZIP.
+
+Проект: https://github.com/davins526/chatvault
