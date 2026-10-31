@@ -1,101 +1,168 @@
 # ChatVault
 
-**Local-first ChatGPT backup and version history for Brave/Chrome.**
+**Your conversations. Your backups.**  
+Локальное резервное копирование переписок ChatGPT с историей версий для **Brave и Google Chrome**.
 
-> **Experimental MVP 0.1.0.** ChatVault is independent from OpenAI and is **not** a full account migration utility. It relies on undocumented ChatGPT internal endpoints; they may change or reject requests. Use the official OpenAI data export where possible.
+[![Release](https://img.shields.io/github/v/release/davins526/chatvault?include_prereleases&label=release)](https://github.com/davins526/chatvault/releases)
+[![CI](https://github.com/davins526/chatvault/actions/workflows/ci.yml/badge.svg)](https://github.com/davins526/chatvault/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-Chromium%20%2F%20Windows-informational)
 
-ChatVault is a browser extension for preserving accessible ChatGPT conversations as local, versioned snapshots. Each subsequent backup retains unchanged revisions rather than duplicating them. Each ZIP contains complete accessible raw conversation graphs for a given snapshot, readable Markdown for the active branch and a coverage/error manifest.
+> **Статус: v0.1.0 — experimental preview.** Код собирается и проходит базовые автоматические тесты, однако реальная работа автоматического сборщика в авторизованном ChatGPT ещё требует полноценного интеграционного тестирования. Не используйте эту версию как единственную резервную копию важных данных.
+>
+> ChatVault — независимый Open Source проект. Он не связан с OpenAI и не одобрен OpenAI.
 
-## Что уже работает в v0.1
+## Зачем нужен ChatVault?
 
-- Manifest V3 для **Brave / Chrome**.
-- Автоматическая недельная проверка: **воскресенье, 20:00 по времени компьютера** (включена по умолчанию).
-- Ручная кнопка «Сделать копию сейчас».
-- Сканирование доступных переписок авторизованной вкладки `chatgpt.com` без хранения access token.
-- Локальная база **IndexedDB**: полные исходные JSON-графы сообщений, SHA-256, дедупликация неизменённых ревизий.
-- Отдельные снимки (snapshots), история изменений и журнал ошибок.
-- **Автоматическое скачивание ZIP** после успешного снимка (включено по умолчанию).
-- Ошибки и прерывания не удаляют старые ревизии и не маскируются под успешный полный бэкап.
+Переписки ChatGPT часто содержат месяцы работы: исходный код, исследования, решения по проектам и историю обсуждений. Потеря доступа к аккаунту может означать потерю всего этого контекста.
 
-## Чего ещё нет
+**ChatVault помогает сохранить доступную историю на своём устройстве** — без облачного сервера разработчика и без обязательной регистрации.
 
-- Содержимое файлов вложений: исходный JSON может включать ссылки/метаданные, но **сами файлы не скачиваются**.
-- Отдельный экспорт инструкций проектов, памяти, пользовательских настроек и неприкреплённых файлов Библиотеки.
-- Импорт с автоматическим воссозданием бесед в другом ChatGPT-аккаунте (официально не поддерживается).
-- Шифрование локальных данных, облачная синхронизация, запуск при полностью закрытом браузере.
-- Строгая проверка полного покрытия аккаунта; ChatVault сохраняет **только доступные текущей сессии беседы**.
-- Настройка другого дня/времени в пользовательском интерфейсе (в v0.1 расписание фиксировано).
-- Миграция всех альтернативных вариантов в Markdown: они присутствуют в `conversation.raw.json` как исходный граф, а Markdown включает только активную ветку.
+- **Автоматически** пытается создавать резервную копию **каждое воскресенье в 20:00** по местному времени компьютера.
+- **Вручную** запускает копирование по кнопке в расширении.
+- **Хранит историю изменений**, не дублируя неизменённые версии в локальной базе.
+- **Скачивает ZIP** с исходным JSON-графом сообщений и читаемым Markdown.
+- **Показывает статус и ошибки**, вместо того чтобы выдавать неудачную выгрузку за успешную.
 
-## Windows EXE setup (Brave / Chrome)
+[**Скачать ChatVault v0.1.0**](https://github.com/davins526/chatvault/releases/tag/v0.1.0) · [Сообщить об ошибке](https://github.com/davins526/chatvault/issues) · [Политика конфиденциальности](PRIVACY.md)
 
-**[Download ChatVault-Setup-v0.1.0.exe](https://github.com/davins526/chatvault/releases/download/v0.1.0/ChatVault-Setup-v0.1.0.exe)** from the [v0.1.0 experimental release](https://github.com/davins526/chatvault/releases/tag/v0.1.0).
+## Функциональность v0.1.0
 
-This is a **Windows installer assistant**, not a one-click browser extension sideload: Chrome and Brave require user confirmation for extensions that are not published in the Chrome Web Store. The EXE copies the extension to `%LOCALAPPDATA%\ChatVault\Extension`, adds a Windows uninstall entry, and displays an installation guide. Administrator privileges are not required.
+| Возможность | Статус и подробности |
+| --- | --- |
+| Manifest V3, Brave / Chrome | Реализовано |
+| Ручное резервное копирование | Реализовано; нужна открытая авторизованная вкладка ChatGPT |
+| Недельное расписание | Реализовано; **воскресенье, 20:00**, включено по умолчанию |
+| Догоняющая попытка после пропуска | Реализовано в логике расписания, выполняется при доступном браузере и вкладке |
+| Автоматическое скачивание ZIP | Включено по умолчанию; ошибки скачивания записываются в журнал |
+| Локальное хранилище IndexedDB | Реализовано |
+| SHA-256, история версий, дедупликация | Реализовано для **хранимых ревизий**, не для сетевых запросов |
+| Исходный граф сообщений | Сохраняется доступный API JSON, включая альтернативные ветки, если они присутствуют в ответе |
+| Читаемый Markdown | Создаётся для текущей активной ветки диалога |
+| История запусков и журнал ошибок | Реализовано: статус, количество сохранённых бесед, ошибки |
+| Контроль ошибок 429 | Реализована остановка и пауза; ограничения сервиса не обходятся |
+| Файлы вложений | **Не реализовано**: сохраняются только доступные метаданные/ссылки в исходном JSON |
+| Память, инструкции проектов, отдельные файлы Библиотеки | **Не реализовано** |
+| Импорт бесед в новый аккаунт как оригинальных чатов | **Не поддерживается** |
+| Шифрование архива и базы | **Не реализовано** |
+| Настраиваемые день, время, периодичность | **Не реализовано**: v0.1 использует фиксированное недельное расписание |
 
-After running the installer, open `brave://extensions` (or `chrome://extensions`), enable **Developer mode**, select **Load unpacked**, and choose `%LOCALAPPDATA%\ChatVault\Extension`. This final browser step cannot be automated by the installer.
+**Важно:** при каждом бэкапе текущий сборщик снова запрашивает доступный список и содержимое переписок. Повторно **не сохраняются** неизменившиеся версии, но запросы к ChatGPT ещё не являются инкрементальными.
 
-The NSIS source is in [installer/ChatVault.nsi](installer/ChatVault.nsi), and [GitHub Actions](.github/workflows/windows-installer.yml) builds the EXE on a Windows runner and attaches it to the release. A SHA-256 checksum is provided alongside the EXE.
-
-## Установка в Brave / Chrome
-
-1. Скачайте [сборку](./dist/) из релиза или ZIP репозитория и распакуйте её.
-2. Откройте `brave://extensions` (Chrome: `chrome://extensions`).
-3. Включите **«Режим разработчика»**.
-4. Нажмите **«Загрузить распакованное расширение»** и выберите папку **`dist`**, где лежит `manifest.json`.
-5. Войдите в ChatGPT в этом же профиле браузера. Откройте `chatgpt.com` во вкладке.
-6. Нажмите иконку ChatVault и **«Сделать копию сейчас»**. После завершения появится запись в журнале, а ZIP попадёт в папку загрузок.
-
-**Важно:** при закрытом браузере, выключенном ПК или неавторизованной сессии еженедельный запуск не гарантируется. Если он пропущен, расширение попробует начать резервирование при следующем открытии ChatGPT после назначенного времени.
-
-### Безопасность локального архива
-
-Переписки могут содержать исходный код, секреты и личные сведения. **IndexedDB и ZIP в v0.1 не шифруются.** Не устанавливайте расширение для личных данных на компьютер, которым управляют третьи лица или к которому имеют доступ другие пользователи. Защитите профиль ОС и храните копии ZIP на доверенном устройстве/носителе. Расширение не загружает переписки на сервер автора, не сохраняет ключи авторизации и не синхронизирует данные через сторонние службы. Доступ к ChatGPT нужен только для чтения содержимого текущей сессии.
-
-## Схема
+### Как выглядит процесс
 
 ```text
-chrome.alarms (вс, 20:00)
-       ↓
-background service worker  ── popup / status
-       ↓
-content script в открытом ChatGPT (авторизованный запрос)
-       ↓            429 → пауза и ошибка
-каждая беседа отдельно
-       ↓
-IndexedDB: chats + revisions (SHA-256) + snapshots + logs
-       ↓
-offscreen document: ZIP из версии снимка
-       ↓
-chrome.downloads → локальный ChatVault-YYYY-MM-DD-N-chats.zip
+Воскресенье, 20:00 / кнопка «Сделать копию»
+                  |
+                  v
+      Открытая вкладка ChatGPT
+                  |
+                  v
+         Сбор доступных бесед
+                  |
+                  v
+       SHA-256 + IndexedDB
+    (новые или изменённые версии)
+                  |
+                  v
+         Snapshot + журнал
+                  |
+                  v
+        Локальный ZIP-архив
 ```
 
-### Модель данных
+Если браузер закрыт, компьютер спит или ChatGPT не авторизован, выполнение **не гарантируется** в назначенный момент. Расширение попытается обработать пропущенный запуск при следующей подходящей возможности. Сервер может отвечать 401/403/429 или менять формат своих внутренних API.
 
-- `chats` — последний хеш и метаданные каждой беседы по ID.
-- `revisions` — полные версии JSON-графа, ключ `chatId:sha256`.
-- `snapshots` — снимки со списком `chatId + hash`, статусом и покрытием.
-- `logs` — локальный журнал.
+## Установка
 
-Объекты `running` после перезапуска маркируются как `partial` и не удаляются. Неполные копии можно экспортировать вручную для спасения уже доступных данных.
+### Вариант A — Windows Setup (.exe)
 
-### Структура архива
+[**Скачать ChatVault-Setup-v0.1.0.exe**](https://github.com/davins526/chatvault/releases/download/v0.1.0/ChatVault-Setup-v0.1.0.exe)
+
+1. Запустите установщик. Он положит файлы в `%LOCALAPPDATA%\ChatVault\Extension`.
+2. Откройте `brave://extensions` или `chrome://extensions`.
+3. Включите **Режим разработчика**.
+4. Нажмите **Загрузить распакованное расширение** и выберите `%LOCALAPPDATA%\ChatVault\Extension`.
+
+Установщик добавляет возможность удаления через Windows. **Он не подключает расширение к браузеру автоматически:** Chromium требует отдельного подтверждения установки вне официального магазина. EXE не подписан коммерческим сертификатом, поэтому SmartScreen может предупредить о неизвестном издателе.
+
+### Вариант B — ZIP без установщика
+
+1. Скачайте [**ChatVault-v0.1.0-extension.zip**](https://github.com/davins526/chatvault/releases/download/v0.1.0/ChatVault-v0.1.0-extension.zip).
+2. Распакуйте ZIP в **постоянную папку**, которую не будете удалять.
+3. Откройте `brave://extensions` или `chrome://extensions`.
+4. Включите **Режим разработчика** → **Загрузить распакованное расширение**.
+5. Выберите папку, в которой находится `manifest.json`.
+
+### Первый запуск
+
+1. Авторизуйтесь на `https://chatgpt.com` в том же профиле браузера.
+2. Откройте значок **ChatVault** на панели расширений.
+3. Нажмите **Сделать копию сейчас**.
+4. Следите за статусом и журналом. При успешной выгрузке ZIP начнёт скачиваться автоматически.
+5. Откройте ZIP и проверьте `manifest.json`, количество чатов и файлы `conversation.raw.json`.
+
+**Рекомендация:** первые проверки проводите в тестовом профиле с неважными переписками. При HTTP 429 не запускайте повторные сканирования подряд.
+
+## Что внутри резервной копии?
 
 ```text
-ChatVault-2026-11-01-69-chats.zip
+ChatVault-YYYY-MM-DD-N-chats.zip
 ├── manifest.json
 ├── README.txt
 └── chats/
     └── Conversation_<id>/
-        ├── conversation.raw.json    # полный доступный граф, главная копия
-        └── conversation.md          # читаемый активный путь
+        ├── conversation.raw.json   # исходный граф из доступного API
+        └── conversation.md         # активная ветка для чтения
 ```
 
-Файл `manifest.json` содержит количество чатов, ошибки и явно указывает непокрытые области.
+`manifest.json` указывает дату, статус, количество бесед, изменения, ошибки и известные пробелы покрытия. **Пометка complete относится только к обработке обнаруженных записей, а не к гарантированно полной выгрузке аккаунта.**
 
-## Разработка
+В **v0.1 применяется несжатый ZIP32 с ограничением 80 МиБ**. Если размер превышен, запись ZIP завершится ошибкой; уже созданные локальные ревизии сохранятся.
 
-Нужны Node.js 20+ и TypeScript 5.8+.
+Исходные версии и снимки хранятся в IndexedDB профиля расширения. При удалении расширения или очистке данных браузера они могут исчезнуть. Поэтому **скачанный и проверенный ZIP нужно хранить отдельно**.
+
+## Безопасность и приватность
+
+- Данные хранятся локально в профиле браузера и в скачанных пользователем ZIP.
+- Нет сервера разработчика, аналитики, рекламы или отправки переписок третьим лицам.
+- Токен сессии используется в памяти для обращения к ChatGPT, но не сохраняется в базе и не экспортируется.
+- Расширение запрашивает доступ только к доменам ChatGPT и необходимые разрешения Chromium.
+- **Локальная база и ZIP не зашифрованы.** Не храните чувствительные архивы на общедоступном компьютере; по возможности используйте шифрование диска.
+
+Подробности: [PRIVACY.md](PRIVACY.md).
+
+## Ограничения
+
+ChatVault использует **недокументированные внутренние API ChatGPT**, поэтому совместимость может измениться без предупреждения. Расширение не обходит rate limits и не обеспечивает гарантированный фоновый запуск при закрытом браузере.
+
+Текущий сборщик ограничен **20 страницами по 50 бесед** (до 1000 записей из используемого списка API). Также он не умеет отдельно гарантированно проверять покрытие всех проектов и архивов. Поэтому фактическую полноту копии нужно проверять самостоятельно.
+
+ChatVault — **архиватор и система локальных версий**, а не средство автоматического переноса всех оригинальных бесед, памяти, подписки или проектов в другой аккаунт ChatGPT.
+
+## Roadmap
+
+- [x] Manifest V3 и интерфейс расширения
+- [x] Недельный планировщик: воскресенье, 20:00
+- [x] IndexedDB, SHA-256 и версии бесед
+- [x] Экспорт JSON + Markdown в ZIP
+- [x] Журнал событий и статусы неполных копий
+- [x] EXE-мастер установки для Windows
+- [ ] Реальная интеграционная проверка Brave / Chrome + ChatGPT
+- [ ] Скачивание вложений, проверка полноты их сохранения
+- [ ] Инкрементальный сетевой сбор без повторного скачивания неизменённых бесед
+- [ ] Доступные инструкции проектов и метаданные проектов
+- [ ] Выбор дня, времени и периода резервирования
+- [ ] Импорт официального экспорта OpenAI
+- [ ] Просмотр снимков и извлечение отдельных версий
+- [ ] Шифрование архивов паролем
+- [ ] Совместимость с Chrome Web Store / независимый аудит
+
+## Разработчикам
+
+Стек: **TypeScript, Manifest V3, IndexedDB, Web Crypto, Chrome Alarms, GitHub Actions, NSIS**.
+
+Требуется Node.js 20+.
 
 ```bash
 npm install
@@ -103,42 +170,26 @@ npm run build
 npm test
 ```
 
-Если `tsc` уже есть в системе, можно собрать без `npm install`:
+Готовая сборка расширения находится в `dist/`. **Не коммитьте личные архивы, секреты и данные сессий**.
 
-```bash
-tsc -p tsconfig.json
-node scripts/copy-public.mjs
-```
+Релизы и установщик собираются через [GitHub Actions](.github/workflows/). Исходный код мастера установки: [installer/ChatVault.nsi](installer/ChatVault.nsi).
 
-**Не включайте личные ZIP, MBOX, секретные ключи или токены в публичный репозиторий.** Для проверки используйте тестовые беседы.
+## License & Credits
 
-## Известные ограничения и риски
+**MIT License** — [LICENSE](LICENSE).
 
-1. Эндпоинты `/api/auth/session`, `/backend-api/conversations` и `/backend-api/conversation/{id}` не являются публичным контрактом. При изменении API автосбор перестанет работать до обновления расширения.
-2. Ошибка 429 ведёт к остановке, cooldown и записи в журнал. Расширение не пытается обходить ограничения сервиса.
-3. Расширение не может запускать Chromium с закрытого состояния или пробуждать компьютер. `chrome.alarms` — **best-effort**.
-4. Данные расширения в IndexedDB могут исчезнуть при удалении расширения или очистке данных браузера. Независимый ZIP — обязательная часть резервного копирования.
-5. В v0.1 ZIP32 с несжатыми файлами ограничен размером **80 МиБ**. При превышении функция сообщает об ошибке; ревизии остаются в IndexedDB.
-6. Архивы не позволяют «клонировать» память, подписку и историю аккаунта в интерфейсе нового ChatGPT.
+ChatVault создан Daniil Goncharov. Проект вдохновлён [ChatGPT Bulk Exporter](https://github.com/vrizo/chatgpt-bulk-exporter) Vitalii Rizo (MIT). Подробности — [NOTICE.md](NOTICE.md).
 
-## Roadmap
+ChatGPT — товарный знак OpenAI. ChatVault не аффилирован с OpenAI.
 
-- [x] Manifest V3, popup, IndexedDB, недельный scheduler
-- [x] История ревизий по SHA-256, ZIP, журнал ошибок
-- [ ] Получение файлов вложений с проверкой контрольных сумм
-- [ ] Экспорт project instructions / метаданных доступными методами
-- [ ] Список и просмотр снимков / восстановление отдельной версии
-- [ ] Настройка дня, времени и частоты
-- [ ] AES-GCM шифрование архивов
-- [ ] Официальный импорт ZIP/JSON OpenAI как fallback
-- [ ] Полноценный Chrome/Brave integration test и аудит перед публикацией в магазин
+---
 
-## Кредиты и лицензия
+## English
 
-Проект вдохновлён [ChatGPT Bulk Exporter](https://github.com/vrizo/chatgpt-bulk-exporter) Виталия Ризо (MIT). Подробнее — [NOTICE.md](NOTICE.md).
+**ChatVault** is an experimental, privacy-first **Chrome/Brave extension** for local backups of accessible ChatGPT conversations.
 
-Код ChatVault распространяется под MIT ([LICENSE](LICENSE)). ChatGPT принадлежит OpenAI; проект независимый, не одобрен и не спонсируется OpenAI.
+**v0.1.0 features:** scheduled weekly backups (Sunday at 20:00, local time), manual backup, immutable SHA-256-deduplicated revisions in IndexedDB, raw conversation JSON graph preservation, readable active-branch Markdown, local ZIP download, a status popup and error logging.
 
-## English short description
+**Important limitations:** this is an experimental prerelease with no complete live ChatGPT integration test; it uses undocumented internal endpoints; it does not download attachment binaries, project instructions or account memory. It does not import conversations into a new ChatGPT account, guarantee scheduling while the browser is closed, or encrypt archives. The current ZIP output is limited to 80 MiB; remote fetching is not yet incremental.
 
-Experimental local-first Chrome/Brave extension that snapshots accessible ChatGPT conversation graphs into IndexedDB, deduplicates revisions by SHA-256, and downloads weekly ZIP archives. Default: Sunday at 20:00 local time. It cannot run with the browser closed, bypass rate limits, or migrate full ChatGPT accounts.
+[**Latest release**](https://github.com/davins526/chatvault/releases/tag/v0.1.0) · [Privacy](PRIVACY.md) · [MIT License](LICENSE)
