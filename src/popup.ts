@@ -136,6 +136,24 @@ $('backup').addEventListener('click',()=>void(async()=>{
     await refresh();
   }
 })());
+$('verifyLocal').addEventListener('click',()=>void(async()=>{
+  const button=$('verifyLocal') as HTMLButtonElement;button.disabled=true;
+  text('verificationResult','Проверяю SHA-256 и графы сообщений локально…');
+  try{
+    const response=await message('CV_VERIFY_LOCAL');
+    if(!response?.ok)throw Error(response?.error||'Не удалось проверить локальную базу');
+    const r=response.verification;
+    text('verificationResult',
+      (r.ok?'Локальная целостность подтверждена.':'Найдены ошибки локальных данных.')+
+      ' Проверено '+r.verified+' из '+r.entries+
+      '. Нет ревизий: '+r.missing+'; неверные хеши: '+r.mismatched+
+      '; без графа сообщений: '+r.missingGraph+'; дубликаты: '+r.duplicated+'.'+
+      (r.status!=='complete'?' Снимок неполный.':'')+
+      ' Проверка не подтверждает полноту аккаунта или скачанного ZIP.'
+    );
+  }catch(e){text('verificationResult','Ошибка проверки: '+String(e));}
+  finally{button.disabled=false;}
+})());
 $('download').addEventListener('click',()=>void(async()=>{
   text('actionResult','Готовлю ZIP…');
   try{

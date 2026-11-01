@@ -1,9 +1,10 @@
 import { DEFAULT_SETTINGS, nextWeekly, type Settings } from './model.js';
-import {addLog, appendChat, finalizeSnapshot, recentSnapshot, startSnapshot, readAll, STORE, putOne} from './db.js';
-import type {Snapshot, Log} from './model.js';
+import {addLog, appendChat, finalizeSnapshot, recentSnapshot, startSnapshot, readAll, readOne, STORE, putOne} from './db.js';
+import type {Snapshot, Revision, Log} from './model.js';
 import {formatDiagnosticReport} from './report.js';
 import {isRateLimitError,shouldClearLegacyCooldown} from './retry.js';
 import {latestDownloadableSnapshot} from './backup-ui.js';
+import {verifyLocalSnapshot} from './verify.js';
 const WEEKLY='chatvault-weekly', RETRY='chatvault-catchup';
 let runTabId:number|null=null;
 let creatingOffscreen:Promise<void>|null=null;
@@ -223,6 +224,22 @@ chrome.runtime.onMessage.addListener((m:any,sender:any,send:(response:any)=>void
       try{await addLog('error',message);}catch{}
       send({ok:false,message});
     });return true;
+  }
+  if(m?.type==='CV_VERIFY_LOCAL'){
+    void(async()=>{
+      const all=await readAll<Snapshot>(STORE.snapshots);
+      const chosen=latestDownloadableSnapshot(all);
+      if(!chosen)throw Error('Нет сохранённых переписок для проверки');
+      const verification=await verifyLocalSnapshot(chosen,entry=>
+        readOne<Revision>(STORE.revisions,`${entry.chatId}:${entry.hash}`)
+      );
+      await addLog(verification.ok?'info':'warning',
+        'Проверка локальной копии: '+verification.verified+'/'+verification.entries+
+        ', отсутствует '+verification.missing+', неверные хеши '+verification.mismatched+
+        ', без графа '+verification.missingGraph+', дубликаты '+verification.duplicated);
+      send({ok:true,verification});
+    })().catch(e=>send({ok:false,error:String(e)}));
+    return true;
   }
   if(m?.type==='CV_EXPORT'){
     void(async()=>{const all=await readAll<Snapshot>(STORE.snapshots);const id=m.snapshotId||latestDownloadableSnapshot(all)?.id;if(!id)throw Error('Нет сохранённых переписок для ZIP');const chosen=all.find(x=>x.id===id);if(!chosen||!chosen.entries.length||chosen.status==='running')throw Error('Выбранный снимок ещё не готов для скачивания');await downloadSnapshot(id);send({ok:true,snapshotId:id,partial:chosen.status!=='complete',count:chosen.entries.length});})().catch((e)=>send({ok:false,error:String(e)}));return true;
